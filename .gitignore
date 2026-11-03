@@ -1,0 +1,48 @@
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python
+.Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+build/
+dist/
+site/
+__pypackages__/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test, type-checker, and linter caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
+# Editor and operating-system files
+# Keep shared workspace settings; ignore other VS Code workspace files.
+.vscode/**
+!.vscode/
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local logs
+*.log
