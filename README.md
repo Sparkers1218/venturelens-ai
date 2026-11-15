@@ -2,11 +2,10 @@
 
 **Better Questions. Stronger Ideas.**
 
-VentureLens AI is an AI-powered startup idea validation platform in its
-foundation stage. It is intended to help aspiring entrepreneurs describe an
-idea and its customers, investigate competitors and alternatives, review
-external research, identify assumptions and risks, and plan practical,
-low-cost validation experiments.
+VentureLens AI is a local-demo startup idea validation workspace. It helps
+aspiring entrepreneurs capture an idea, record competitors and source notes,
+review a transparent structured report, and plan practical validation
+experiments.
 
 The product must distinguish external evidence, user-provided information,
 assumptions, and AI-generated recommendations. It must not invent market
@@ -15,15 +14,14 @@ statistics or promise that an idea will succeed.
 ## Technology and architecture
 
 - Python and Streamlit
-- Modular monolith, with UI, business logic, persistence, and integrations kept
-  separate as the application grows
-- OpenID Connect (OIDC) for planned authentication
-- PostgreSQL with SQLAlchemy and Alembic for planned persistence and migrations
-- NVIDIA NIM and a separate research/search API for planned integrations
-- Pydantic for validation, HTTPX for HTTP clients, and pytest for tests
+- Streamlit UI, Pydantic input validation, SQLAlchemy persistence, and a
+  deterministic rule-based analysis module
+- SQLite by default; PostgreSQL URLs are supported through `DATABASE_URL`
+- pytest for automated tests
 
-External providers and credentials have not been configured. No provider
-endpoints or model availability are assumed.
+No AI or live research provider is configured or required. Authentication and
+multi-user access controls are not implemented. See
+[PROJECT_STATUS.md](PROJECT_STATUS.md) for what is and is not included.
 
 ## Getting started (Windows)
 
@@ -55,15 +53,21 @@ Install the project's dependencies after activation:
 python -m pip install -r requirements.txt
 ```
 
-Create a local environment file only if you need to supply configuration for
-services you have independently set up:
+The app defaults to the local SQLite database `venturelens.db`. To use the same
+defaults through a local environment file, optionally copy the example:
 
 ```bat
 copy .env.example .env
 ```
 
-Edit `.env` locally. Never commit it or put real credentials in
-`.env.example`.
+Edit `DATABASE_URL` in `.env` only if you have independently configured a
+database. Never commit `.env` or put credentials in `.env.example`.
+
+Initialize the database (the app also initializes it at startup):
+
+```bat
+python -m database.init_db
+```
 
 Run the Streamlit application:
 
@@ -83,12 +87,31 @@ When finished, deactivate the virtual environment:
 deactivate
 ```
 
-Git and GitHub setup have not started. Wait for review before proceeding with
-version control setup.
-
 ## Current implementation status
 
-Milestone 1 provides the initial project configuration, a Streamlit landing
-page, and basic configuration tests. Authentication, database connections and
-migrations, AI analysis, and external research are not implemented. See
-[PROJECT_STATUS.md](PROJECT_STATUS.md) and [DECISIONS.md](DECISIONS.md).
+The app supports persistent idea projects with problem, solution, customer,
+industry, geography, and optional business-model details. Competitor records
+include a description, website/reference, target audience, pricing, and
+differentiation notes. Manual research notes capture a title, publisher, URL,
+and notes.
+
+Generate and save a structured rule-based report with 0-3 information-coverage
+scores, risk counts, competitor comparison, assumptions, and validation
+experiments. Score rubrics are included in each report; scores measure only
+how much information was entered, never commercial viability. The report can
+be downloaded as JSON and reopened with the project.
+
+All competitor and research details are user-provided and unverified. No URLs
+are fetched; no AI or external research is used. Reports clearly label their
+provenance and assumptions.
+
+The demo is single-user and local: there is no login, authorization, tenant
+isolation, live research, or AI-generated analysis. There is no Alembic
+migration framework; startup applies the current additive schema upgrades to
+existing local databases.
+Source notes and competitor records are manually entered and are not
+independently verified. The completeness indicator measures only whether
+fields are filled; it is not a market or success score.
+
+See [PROJECT_STATUS.md](PROJECT_STATUS.md), [DECISIONS.md](DECISIONS.md), and
+the product requirements in `docs/02-requirements/PRODUCT_REQUIREMENTS.md`.

@@ -46,3 +46,6 @@ Thumbs.db
 
 # Local logs
 *.log
+
+# Local demo database
+venturelens.db

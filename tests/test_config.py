@@ -11,7 +11,7 @@ def test_settings_have_safe_defaults(monkeypatch) -> None:
     assert settings.app_env == "development"
     assert settings.debug is False
     assert settings.log_level == "INFO"
-    assert settings.database_url is None
+    assert settings.database_url == "sqlite:///./venturelens.db"
 
 
 def test_settings_read_environment_variables(monkeypatch) -> None:
