@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,7 @@ from database.repository import (
     update_project,
 )
 from database.models import AnalysisReport, Competitor, ResearchSource
+from ui.views import _report_version_label, _serialize_report
 
 
 @pytest.fixture
@@ -34,6 +36,28 @@ def engine():
     initialize_database(test_engine)
     yield test_engine
     test_engine.dispose()
+
+
+def test_report_export_is_utf8_json_bytes() -> None:
+    payload = {"project": "Cafe\u0301 planner", "summary": "Founder-provided"}
+
+    exported = _serialize_report(payload)
+
+    assert isinstance(exported, bytes)
+    assert "Cafe\u0301".encode("utf-8") in exported
+    assert not exported.startswith(bytes.fromhex("efbbbf"))
+    assert json.loads(exported.decode("utf-8")) == payload
+
+
+def test_report_version_labels_disambiguate_same_second() -> None:
+    first = {
+        "id": "12345678-aaaa",
+        "created_at": "2026-11-17T02:00:00",
+        "engine_label": "Rule-based demo analysis",
+    }
+    second = {**first, "id": "87654321-bbbb"}
+
+    assert _report_version_label(first) != _report_version_label(second)
 
 
 def test_inputs_validate_lengths_urls_and_source_details() -> None:
@@ -508,3 +532,86 @@ def test_streamlit_demo_workflow_saves_a_reopenable_report(
     assert any(
         item.value == "UI workflow project" for item in restarted_app.subheader
     )
+
+
+def test_report_versions_mark_stale_inputs_and_survive_navigation(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from config.settings import get_settings
+    from database.connection import database_session, get_engine
+    from database.repository import get_project_record
+
+    db_path = tmp_path / "report-versions.db"
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("DEMO_MODE", raising=False)
+    monkeypatch.setenv(
+        "DATABASE_URL", str(URL.create("sqlite", database=str(db_path)))
+    )
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    app_path = Path(__file__).resolve().parents[1] / "app.py"
+
+    try:
+        app = AppTest.from_file(str(app_path), default_timeout=20).run()
+        assert not app.exception
+        app.radio(key="page_nav").set_value("Create Project").run()
+        next(item for item in app.text_input if item.label == "Project name *").set_value(
+            "Versioned report project"
+        )
+        app.button(key="FormSubmitter:create_project_form-Save project").click().run()
+        project_id = app.session_state["selected_project_id"]
+        assert not app.get("download_button")
+
+        app.button(key=f"analyze_{project_id}").click().run()
+        assert not app.exception
+        first_download_url = app.get("download_button")[0].proto.url
+
+        app.radio(key="page_nav").set_value("Project Workspace").run()
+        next(
+            item for item in app.text_area if item.label == "Problem statement"
+        ).set_value("A changed problem statement for the second report.")
+        app.button(
+            key=f"FormSubmitter:edit_project_{project_id}-Save changes"
+        ).click().run()
+        assert not app.exception
+
+        app.radio(key="page_nav").set_value("Analysis Report").run()
+        assert any(
+            "Project inputs changed after the latest report was saved"
+            in item.value
+            for item in app.warning
+        )
+        app.button(key=f"analyze_{project_id}").click().run()
+        assert not app.exception
+
+        with database_session(get_engine()) as session:
+            project = get_project_record(session, project_id)
+        assert project is not None
+        assert len(project["reports"]) == 2
+        earlier_id = project["reports"][1]["id"]
+        latest_id = project["reports"][0]["id"]
+        assert (
+            project["reports"][0]["payload"]["problem_and_solution_assessment"][
+                "problem_statement"
+            ]
+            == "A changed problem statement for the second report."
+        )
+        assert app.session_state[f"report_select_{project_id}"] == latest_id
+
+        latest_download_url = app.get("download_button")[0].proto.url
+        assert latest_download_url != first_download_url
+        app.selectbox(key=f"report_select_{project_id}").set_value(earlier_id).run()
+        assert not app.exception
+        assert any(
+            "earlier saved report version" in item.value for item in app.info
+        )
+        assert app.get("download_button")[0].proto.url == first_download_url
+
+        app.radio(key="page_nav").set_value("Dashboard").run()
+        app.radio(key="page_nav").set_value("Analysis Report").run()
+        assert app.session_state[f"report_select_{project_id}"] == earlier_id
+        assert app.get("download_button")[0].proto.url == first_download_url
+    finally:
+        get_engine().dispose()
+        get_engine.cache_clear()
+        get_settings.cache_clear()

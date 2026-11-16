@@ -32,6 +32,17 @@ from ui.components import request_navigation, show_validation_error
 LOGGER = logging.getLogger(__name__)
 
 
+def _serialize_report(payload: dict[str, Any]) -> bytes:
+    return json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+
+
+def _report_version_label(report: dict[str, Any]) -> str:
+    return (
+        f"{report['created_at']} · {report['engine_label']} · "
+        f"{report['id'][:8]}"
+    )
+
+
 def _read_projects(search: str = "") -> list[dict[str, Any]] | None:
     try:
         with database_session() as session:
@@ -671,6 +682,7 @@ def _render_report(project: dict[str, Any]) -> None:
             LOGGER.error("Could not save analysis report (%s)", type(error).__name__)
             st.error("The report was not saved. Check the database and retry.")
             return
+        st.session_state[f"selected_report_id_{project['id']}"] = report_id
         st.session_state[f"report_select_{project['id']}"] = report_id
         st.success("Report generated and saved.")
         st.rerun()
@@ -681,22 +693,37 @@ def _render_report(project: dict[str, Any]) -> None:
 
     reports = project["reports"]
     report_by_id = {report["id"]: report for report in reports}
-    stored_selection = st.session_state.get(f"report_select_{project['id']}")
+    selection_key = f"report_select_{project['id']}"
+    persistent_selection_key = f"selected_report_id_{project['id']}"
+    preferred_id = st.session_state.get(persistent_selection_key)
+    if preferred_id not in report_by_id:
+        preferred_id = reports[0]["id"]
+    selected_before_render = st.session_state.get(selection_key)
+    if selected_before_render not in report_by_id:
+        selected_before_render = preferred_id
+        st.session_state[selection_key] = selected_before_render
     default_index = next(
-        (index for index, item in enumerate(reports) if item["id"] == stored_selection),
-        0,
+        index
+        for index, item in enumerate(reports)
+        if item["id"] == selected_before_render
     )
     selected_id = st.selectbox(
         "Saved report",
         options=[report["id"] for report in reports],
         index=default_index,
-        format_func=lambda report_id: (
-            f"{report_by_id[report_id]['created_at']} · "
-            f"{report_by_id[report_id]['engine_label']}"
-        ),
-        key=f"report_select_{project['id']}",
+        format_func=lambda report_id: _report_version_label(report_by_id[report_id]),
+        key=selection_key,
     )
+    st.session_state[persistent_selection_key] = selected_id
     report = report_by_id[selected_id]
+    if selected_id != reports[0]["id"]:
+        st.info("Viewing an earlier saved report version.")
+    if project["analysis_status"] == "Inputs changed since last report":
+        st.warning(
+            "Project inputs changed after the latest report was saved. This report "
+            "preserves the inputs used at that time; generate a new report to assess "
+            "the current project information."
+        )
     payload = report["payload"]
     if payload.get("schema_version") != 2:
         st.warning(
@@ -705,7 +732,7 @@ def _render_report(project: dict[str, Any]) -> None:
         )
         st.download_button(
             "Download legacy report (JSON)",
-            data=json.dumps(payload, ensure_ascii=False, indent=2),
+            data=_serialize_report(payload),
             file_name=f"venturelens-legacy-{report['id'][:8]}.json",
             mime="application/json",
             key=f"download_legacy_report_{report['id']}",
@@ -863,7 +890,7 @@ def _render_report(project: dict[str, Any]) -> None:
     ).strip("-") or "venturelens-report"
     st.download_button(
         "Download report (JSON)",
-        data=json.dumps(payload, ensure_ascii=False, indent=2),
+        data=_serialize_report(payload),
         file_name=f"{filename_stem}-{report['id'][:8]}.json",
         mime="application/json",
         key=f"download_report_{report['id']}",

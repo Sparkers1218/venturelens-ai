@@ -105,7 +105,9 @@ Generate and save a structured rule-based report with 0-3 information-coverage
 scores, risk counts, competitor comparison, assumptions, and validation
 experiments. Score rubrics are included in each report; scores measure only
 how much information was entered, never commercial viability. The report can
-be downloaded as JSON and reopened with the project.
+be downloaded as JSON and reopened with the project. Earlier report versions
+remain selectable across navigation; the report view warns when project inputs
+have changed since the latest saved analysis.
 
 All competitor and research details are user-provided and unverified. No URLs
 are fetched; no AI or external research is used. Reports clearly label their

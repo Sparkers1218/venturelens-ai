@@ -27,8 +27,10 @@
 - Versioned deterministic reports cover problem/solution, customer definition,
   competitor comparison, business-model considerations, brief strengths and
   gaps, risks, assumptions, research references, experiments, and next steps.
-  JSON download is available. Scores describe information coverage/detail, not
-  viability or success.
+  JSON download is available. Prior versions remain selectable across
+  navigation, report labels are disambiguated, and edits warn that the latest
+  analysis is stale. Scores describe information coverage/detail, not viability
+  or success.
 - The public evaluator mode is separate from the local workflow. It overrides
   any configured database URL with in-memory SQLite, seeds only clearly
   labeled fictional sample data, disables write controls, enables SQLite's
@@ -86,7 +88,7 @@
 
 ## Verification
 
-- `.venv\Scripts\python.exe -m pytest -q`: **20 passed in 5.39s**.
+- `.venv\Scripts\python.exe -m pytest -q`: **23 passed in 6.37s**.
 - Python compilation, Streamlit config/Secrets TOML parsing, and
   `git diff --check` passed.
 - AppTest verified production evaluator startup from mocked Streamlit Secrets,
@@ -94,6 +96,11 @@
   availability, database URL isolation, SQLite write blocking, and production
   fail-closed behavior. Configuration tests verify Streamlit Secrets loading,
   environment-variable precedence, and the missing-demo safety case.
+- Report lifecycle tests verify UTF-8 JSON serialization, empty-report
+  download gating, stale-input warnings, version disambiguation, selection
+  persistence across navigation, and the download URL changing with the
+  selected version. Local and deployed media responses were fetched and parsed
+  as JSON with the expected MIME type and attachment filename.
 - Hosted browser verification confirmed the public evaluator notice, fictional
   sample, My Projects/Create Project navigation, read-only project-creation
   restriction, and successful switching between light and dark themes.

@@ -11,7 +11,7 @@ startup fails unless this demo mode is enabled. Streamlit Cloud settings now
 load directly from `st.secrets`; the hosted startup failure caused by the
 missing Secrets source is fixed.
 
-The complete suite passes **20 pytest tests**. Python compilation,
+The complete suite passes **23 pytest tests**. Python compilation,
 Streamlit/Secrets TOML parsing, whitespace checks, and AppTest coverage of
 Secrets loading, production startup, and read-only behavior also passed. The
 deployed app at
@@ -22,6 +22,14 @@ switching worked in both directions. A local browser sweep covered all ten
 pages, both themes, and the requested viewport widths without observed
 overflow or clipped content. The browser rounded 375 to 376 and 430 to 431 CSS
 pixels.
+
+The report export was verified beyond button presence: local and hosted
+Streamlit media URLs returned HTTP 200 with `application/json`, an attachment
+filename ending in `.json`, UTF-8 bytes without a BOM, and valid JSON matching
+the selected report. The Playwright environment did not emit a download event
+even for a synthetic data-URI probe, so the media response bytes were fetched
+directly. The audit also fixed stale-report disclosure and report-version
+selection loss across navigation.
 
 **Release verdict: READY FOR CONTROLLED PUBLIC DEMO.** This verdict applies
 only to the anonymous synthetic read-only demo. The app is not ready for
@@ -46,15 +54,17 @@ authenticated or public multi-user project storage.
 
 | Check | Command or method | Result |
 |---|---|---|
-| Complete pytest suite | `.\.venv\Scripts\python.exe -m pytest -q` | **20 passed in 5.39s** |
+| Complete pytest suite | `.\.venv\Scripts\python.exe -m pytest -q` | **23 passed in 6.37s** |
 | Python compilation | `.\.venv\Scripts\python.exe -m compileall -q app.py config core database ui tests` | Passed |
 | Streamlit config and documented Secrets TOML | Python `tomllib` parser | Both parsed successfully |
 | Whitespace errors | `git --no-pager diff --check` | Passed; no whitespace errors |
-| Demo startup and UI | `streamlit.testing.v1.AppTest` | Production demo starts; sample and warning render; mutation widgets are disabled; report download button renders |
+| Demo startup and UI | `streamlit.testing.v1.AppTest` | Production demo starts; sample and warning render; mutation widgets are disabled; no download control appears without a report |
 | Local server startup | Streamlit on `127.0.0.1:8517`, `/healthz` | Returned HTTP 200; configured external database file was not created; smoke-test server was stopped |
 | Database isolation | Focused evaluator-mode test | Configured file URL ignored; target file not created; in-memory SQLite reports `query_only=1`; attempted schema write rejected |
 | Production fail-closed behavior | Focused AppTest | `APP_ENV=production` without demo mode stops before database initialization |
 | Existing local workflow | Complete pytest suite | Project/competitor/source/report persistence, reopening, theme and existing workflow tests passed |
+| Report lifecycle | AppTest plus local browser | UTF-8 JSON serialization, stale-input notice, two saved versions, version selection through navigation, and version-specific media URLs passed |
+| Report download response | Direct fetch of local and hosted Streamlit media URLs | HTTP 200; `application/json`; `Content-Disposition: attachment` with `.json` filename; valid UTF-8 JSON containing the expected project/report data |
 | Hosted Cloud startup | Community Cloud logs and public page | Reboot recloned `feature/project-ui`; Uvicorn started; production guard error cleared |
 | Hosted UI | Browser walkthrough after UI recovery | Synthetic evaluator label/sample, My Projects and Create Project navigation, read-only Create Project state, and light/dark switching in both directions verified |
 | Responsive UI | Local browser sweep | All ten navigation pages and both themes at requested widths 320, 375, 390, 430, 768, 1024, and 1440; browser rounded 375 to 376 and 430 to 431 CSS pixels; no observed horizontal overflow or clipped content |
@@ -63,8 +73,8 @@ Tests ran in the existing `.venv`; no dependency was installed or changed.
 The hosted browser console showed resource 404s, aborted status-page embed
 requests, Vega chart warnings, and one transient WebSocket close (1006).
 Navigation and theme controls remained responsive; these console events were
-not investigated against Cloud logs. A private/incognito walkthrough,
-downloaded JSON bytes, and every hosted navigation page were not verified.
+not investigated against Cloud logs. A private/incognito walkthrough and
+every hosted navigation page were not verified.
 
 ## 4. Implemented features
 
@@ -96,8 +106,6 @@ downloaded JSON bytes, and every hosted navigation page were not verified.
   retrieved or verified.
 - Experiment suggestions and priorities are deterministic planning prompts,
   not research-derived recommendations.
-- JSON export is rendered and its download button is present, but automated
-  tests do not retrieve and parse actual downloaded bytes.
 - PostgreSQL URL/driver support exists, but no live PostgreSQL integration test
   was run.
 
@@ -129,7 +137,7 @@ demo's fictional sample as real product validation.
 | 10 | Experiment prioritization | **IMPLEMENTED AND VERIFIED** | Rule-based experiment priorities in [core/analysis.py](core/analysis.py); priority behavior is tested. |
 | 11 | Cost/time estimates and success criteria | **PARTIALLY IMPLEMENTED** | Report provides qualitative caveats and success-threshold guidance; it does not estimate numeric costs/time or capture user criteria. |
 | 12 | Structured analysis report | **IMPLEMENTED AND VERIFIED** | Versioned deterministic report in [core/analysis.py](core/analysis.py), rendered in [ui/views.py](ui/views.py), persisted in [tests/test_mvp.py](tests/test_mvp.py). |
-| 13 | Report export | **IMPLEMENTED BUT NOT VERIFIED** | JSON download button in [ui/views.py](ui/views.py); AppTest checks availability, not downloaded bytes. |
+| 13 | Report export | **IMPLEMENTED AND VERIFIED** | JSON media responses from [ui/views.py](ui/views.py) were fetched locally and from the deployed app; MIME, attachment filename, UTF-8 encoding, JSON parsing, and report content were checked. |
 | 14 | Project saving and retrieval | **IMPLEMENTED AND VERIFIED** | Repository persistence and local workflow in [database/repository.py](database/repository.py) and [tests/test_mvp.py](tests/test_mvp.py). |
 | 15 | Dashboard and visual analytics | **IMPLEMENTED AND VERIFIED** | Descriptive project/report counts and input-completeness chart in `render_dashboard()` in [ui/views.py](ui/views.py); not market analytics. |
 | 16 | Navigation and theme consistency | **IMPLEMENTED AND VERIFIED** | Navigation in [ui/components.py](ui/components.py), theme in [ui/theme.py](ui/theme.py); AppTest passed, and hosted navigation plus light/dark switching were manually verified. |
@@ -142,7 +150,7 @@ demo's fictional sample as real product validation.
 | My Projects / workspace | Existing tests reopen a local project; hosted My Projects navigation displayed the sample. |
 | Create Project | Local workflow remains tested; hosted evaluator page displayed the read-only message and no project fields. |
 | Competitor and research pages | Existing local tests exercise persistence; evaluator workspace inputs and submit/remove actions are disabled. |
-| Analysis report | Existing tests generate/reopen local report; evaluator sample report renders and download button is present. |
+| Analysis report | Tests cover report generation, version selection, stale-input notice, and navigation persistence. Local and hosted JSON media responses were parsed and checked against report content. |
 | Settings/profile/navigation | Existing AppTest navigates pages; evaluator text discloses no authentication and synthetic-only scope. |
 | Theme | Existing theme tests passed; hosted light/dark switching was manually verified in both directions. |
 | Responsive behavior | Locally checked at all requested widths in both themes across all ten pages; no overflow/clipping observed. Public deployment was not separately swept at every width. |
@@ -166,11 +174,16 @@ demo's fictional sample as real product validation.
 
 ## 10. Report and export verification
 
-The local report pipeline remains covered by tests for deterministic output,
-provenance, risk/priority structure, persistence, and reopening. The evaluator
-seed report is tested for synthetic provenance and absence of external source
-records. The report download button is rendered in AppTest, but the downloaded
-file's bytes and round-trip JSON parse were not tested.
+The local report pipeline is covered by tests for deterministic output,
+provenance, risk/priority structure, persistence, reopening, stale-input
+disclosure, version disambiguation, and selection persistence across
+navigation. An empty report state has no download button. Export bytes are
+explicit UTF-8 JSON. For the local app and the deployed demo, the emitted media
+URL returned HTTP 200, `Content-Type: application/json`, a
+`Content-Disposition` attachment filename with a `.json` extension, and
+round-trip-valid JSON containing the expected report content. Streamlit's
+chart PNG and table CSV controls are per-component exports, not alternate
+whole-report formats; JSON is the only full report export.
 
 ## 11. Security and privacy limitations
 
@@ -258,6 +271,11 @@ authentication, data isolation, or persistent cloud storage.
   public demo navigation and its read-only synthetic state.
 - Updated the deployment guide and release documentation with the deployed
   URL and actual hosted verification.
+- Marked reports stale when current inputs have changed, retained the selected
+  report version across navigation, and disambiguated versions created within
+  the same displayed second.
+- Made report serialization explicitly UTF-8 JSON bytes and added regression
+  coverage for report versions, stale inputs, empty exports, and navigation.
 - Updated [README.md](README.md), [PROJECT_STATUS.md](PROJECT_STATUS.md), and
   this report.
 - Preserved existing UI, theme, local persistence, and unrelated dirty work.
@@ -271,9 +289,12 @@ authentication, data isolation, or persistent cloud storage.
 - Streamlit Cloud startup and page rendering were verified after reboot.
   Persistence across a Cloud process restart was not independently inspected;
   the demo is designed to recreate its synthetic data in memory on startup.
-- Actual downloaded JSON contents, PostgreSQL integration, and accessibility
-  remain unverified. Responsive checks were local; the public deployment was
-  not separately tested at every requested width.
+- The browser automation harness suppresses download events, including for a
+  synthetic data-URI probe; the actual Streamlit media response was fetched
+  and validated instead. The user's OS save dialog was not observed.
+- PostgreSQL integration and accessibility remain unverified. Responsive
+  checks were local; the public deployment was not separately tested at every
+  requested width.
 
 ## 17. Windows commands
 
@@ -307,14 +328,16 @@ Run the complete test suite:
 
 ### Verified automatically
 
-- [x] Complete test suite: 20 passed in 5.39s.
+- [x] Complete test suite: 23 passed in 6.37s.
 - [x] Settings tests cover Streamlit Secrets, environment precedence, and
   production mode without demo enabled.
 - [x] Production evaluator startup and synthetic notice through AppTest.
 - [x] Local Streamlit health endpoint returned HTTP 200.
 - [x] Demo mode ignores a configured file-backed database URL.
 - [x] Database write protection and production fail-closed behavior.
-- [x] Read-only evaluator UI and report download-button availability.
+- [x] Read-only evaluator UI and no-download empty-report state.
+- [x] Report version selection persistence, stale-input warning, and UTF-8
+  JSON serialization.
 - [x] Python compilation, TOML parsing, and `git diff --check`.
 - [x] Existing local workflow tests remain passing.
 
@@ -326,6 +349,8 @@ Run the complete test suite:
 - [x] Public My Projects and Create Project navigation; creation restriction
   displayed.
 - [x] Public light/dark theme toggle in both directions.
+- [x] Local and hosted JSON media response bytes, MIME, filename, and JSON
+  round trip; hosted response contained only the fictional sample.
 - [x] Local browser sweep of all ten pages and both themes at requested widths
   320, 375, 390, 430, 768, 1024, and 1440 CSS pixels; browser rounded 375 to
   376 and 430 to 431; no observed overflow/clipping.
@@ -334,7 +359,7 @@ Run the complete test suite:
 
 ### Not verified
 
-- [ ] Actual downloaded report bytes and JSON round trip.
+- [ ] Browser OS save dialog behavior (automation harness suppresses download events).
 - [ ] PostgreSQL server integration.
 - [ ] Full accessibility review and public viewport-by-viewport responsive
   sweep.
