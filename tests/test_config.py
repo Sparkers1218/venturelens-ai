@@ -1,15 +1,20 @@
+import streamlit as st
+
 from config.settings import Settings
 
 
+SETTING_ENV_VARS = (
+    "APP_NAME",
+    "APP_ENV",
+    "DEBUG",
+    "LOG_LEVEL",
+    "DATABASE_URL",
+    "DEMO_MODE",
+)
+
+
 def test_settings_have_safe_defaults(monkeypatch) -> None:
-    for name in (
-        "APP_NAME",
-        "APP_ENV",
-        "DEBUG",
-        "LOG_LEVEL",
-        "DATABASE_URL",
-        "DEMO_MODE",
-    ):
+    for name in SETTING_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
 
     settings = Settings(_env_file=None)
@@ -32,6 +37,15 @@ def test_settings_read_environment_variables(monkeypatch) -> None:
         "postgresql+psycopg://user:password@localhost:5432/venturelens",
     )
     monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setattr(
+        st,
+        "secrets",
+        {
+            "APP_NAME": "Cloud VentureLens",
+            "APP_ENV": "production",
+            "DEMO_MODE": False,
+        },
+    )
 
     settings = Settings(_env_file=None)
 
@@ -43,3 +57,31 @@ def test_settings_read_environment_variables(monkeypatch) -> None:
         "postgresql+psycopg://user:password@localhost:5432/venturelens"
     )
     assert settings.demo_mode is True
+
+
+def test_settings_read_streamlit_cloud_secrets(monkeypatch) -> None:
+    for name in SETTING_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(
+        st,
+        "secrets",
+        {"APP_ENV": "production", "DEMO_MODE": True},
+    )
+
+    settings = Settings(_env_file=None)
+
+    assert settings.app_env == "production"
+    assert settings.demo_mode is True
+
+
+def test_production_secret_without_demo_secret_keeps_demo_disabled(
+    monkeypatch,
+) -> None:
+    for name in SETTING_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(st, "secrets", {"APP_ENV": "production"})
+
+    settings = Settings(_env_file=None)
+
+    assert settings.app_env == "production"
+    assert settings.demo_mode is False

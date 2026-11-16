@@ -43,7 +43,11 @@ credentials are not required.
 
    These two settings are required. No other secret or `DATABASE_URL` is
    required. In production, the app refuses to start unless demo mode is
-   enabled; demo mode always selects its own in-memory database.
+   enabled; demo mode always selects its own in-memory database. VentureLens
+   reads these root-level values directly from Streamlit's `st.secrets`; it
+   does not rely on the host exporting them as process environment variables.
+   Process environment variables still take precedence over `.env`, which
+   takes precedence over Streamlit Secrets.
 4. Select **Deploy** and wait for the app to finish starting. The first
    dependency installation can take several minutes.
 

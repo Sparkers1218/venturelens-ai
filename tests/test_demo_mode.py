@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import streamlit as st
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from streamlit.testing.v1 import AppTest
@@ -62,9 +63,14 @@ def test_public_evaluator_ui_is_read_only_and_discloses_synthetic_data(
     monkeypatch, tmp_path: Path
 ) -> None:
     configured_database = tmp_path / "ui-must-not-be-created.db"
-    monkeypatch.setenv("APP_ENV", "production")
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("DEMO_MODE", raising=False)
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{configured_database}")
+    monkeypatch.setattr(
+        st,
+        "secrets",
+        {"APP_ENV": "production", "DEMO_MODE": True},
+    )
     _clear_cached_runtime()
     app_path = Path(__file__).resolve().parents[1] / "app.py"
 
@@ -110,9 +116,10 @@ def test_production_without_demo_mode_stops_before_database_initialization(
     monkeypatch, tmp_path: Path
 ) -> None:
     configured_database = tmp_path / "production-must-not-start.db"
-    monkeypatch.setenv("APP_ENV", "production")
-    monkeypatch.setenv("DEMO_MODE", "false")
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("DEMO_MODE", raising=False)
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{configured_database}")
+    monkeypatch.setattr(st, "secrets", {"APP_ENV": "production"})
     _clear_cached_runtime()
     app_path = Path(__file__).resolve().parents[1] / "app.py"
 
