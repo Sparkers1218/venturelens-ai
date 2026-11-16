@@ -12,7 +12,7 @@
 | 5. Research integration | Research provider, retrieval, and evidence attribution | Not implemented |
 | 6. AI provider integration and evaluation | Provider evaluation and structured analysis | Deterministic rule-based engine implemented; no AI provider |
 | 7. User workflows | Streamlit pages for idea intake, analysis, and saved reports | Local MVP implemented |
-| 8. Hardening and release | Deployment configuration and release verification | Read-only synthetic evaluator mode and Streamlit Community Cloud configuration prepared; hosted deployment not yet performed |
+| 8. Hardening and release | Deployment configuration and release verification | Read-only synthetic evaluator mode deployed and verified on Streamlit Community Cloud |
 
 ## Current implementation
 
@@ -38,6 +38,9 @@
 - The public sample is temporary and is recreated after process restart. It
   accepts no evaluator project data and makes no authentication or ownership
   claims.
+- Streamlit Cloud settings are loaded directly from `st.secrets`; the
+  production evaluator deployment was verified after this settings-source
+  fix.
 - Authentication, per-user ownership, tenant isolation, live research, and
   AI-provider integration are not implemented. Do not use the app as a public
   multi-user project service.
@@ -48,11 +51,16 @@
 
 - `.streamlit/config.toml` and [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
   prepare the app for Streamlit Community Cloud.
-- The deployment source is pushed to `feature/project-ui` at commit
-  `a28ca4fbdd05b9c42595721b908a286ee1fbf6cb`. Hosting still requires an
-  authorized Community Cloud sign-in and deployment. No public URL has been
-  created or tested.
-- Community Cloud Secrets for the prepared demo are:
+- The deployed public evaluator demo is
+  [venturelens-ai-spark2scale.streamlit.app](https://venturelens-ai-spark2scale.streamlit.app/).
+  The Cloud app is configured for branch `feature/project-ui` and entry point
+  `app.py`. The settings fix was pushed in commit
+  `c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2`.
+- The hosted dashboard, synthetic sample, navigation, light/dark toggle, and
+  read-only project-creation state were manually verified. Cloud startup logs
+  show the server started; no production startup-guard failure remained.
+- The verified Cloud runtime was Python 3.11.18. Community Cloud Secrets for
+  the demo are:
 
   ```toml
   APP_ENV = "production"
@@ -67,16 +75,21 @@
 
 ## Verification
 
-- `.venv\Scripts\python.exe -m pytest -q`: **15 passed in 3.65s**.
+- `.venv\Scripts\python.exe -m pytest -q`: **17 passed in 3.47s**.
 - Python compilation, Streamlit config/Secrets TOML parsing, and
   `git diff --check` passed.
-- AppTest verified production evaluator startup, synthetic sample display,
-  disabled mutation controls, report download-button availability, database
-  URL isolation, SQLite write blocking, and production fail-closed behavior.
+- AppTest verified production evaluator startup from mocked Streamlit Secrets,
+  synthetic sample display, disabled mutation controls, report download-button
+  availability, database URL isolation, SQLite write blocking, and production
+  fail-closed behavior. Configuration tests verify Streamlit Secrets loading,
+  environment-variable precedence, and the missing-demo safety case.
+- Hosted browser verification confirmed the public evaluator notice, fictional
+  sample, My Projects navigation, disabled project creation, and successful
+  switching between light and dark themes.
 - A local Streamlit process returned HTTP 200 from `/healthz`; the configured
   external database file was not created.
-- No hosted deployment or public URL has been created. Full details and
-  remaining manual checks are in [FINAL_RELEASE_AUDIT.md](FINAL_RELEASE_AUDIT.md).
+- Full deployment and verification details are in
+  [FINAL_RELEASE_AUDIT.md](FINAL_RELEASE_AUDIT.md).
 
 ## Known limitations and remaining work
 
@@ -87,9 +100,8 @@
 - No authentication or user/project ownership isolation exists.
 - There is no Alembic migration history. Existing local schema support is
   limited to the explicit additive upgrades in `database/connection.py`.
-- PostgreSQL connectivity and Streamlit Community Cloud deployment have not
-  been verified against live services.
+- PostgreSQL connectivity has not been verified against a live server.
 - Public demo data is in memory only and is not persistent across process
   restarts.
-- A deployed browser session, public URL access, and evaluator sharing still
-  require manual verification after deployment.
+- The public URL is accessible without evaluator authentication by design.
+  Keep the demo synthetic and read-only; do not use it for shared real data.

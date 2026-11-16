@@ -1,11 +1,12 @@
 # Public Evaluator Demo Deployment
 
-The deployment-ready source is pushed to
-[`feature/project-ui`](https://github.com/Sparkers1218/venturelens-ai/tree/feature/project-ui)
-at commit
-[`a28ca4f`](https://github.com/Sparkers1218/venturelens-ai/commit/a28ca4fbdd05b9c42595721b908a286ee1fbf6cb).
-No Community Cloud app has been created yet; the current browser session is
-signed out and must be authorized before deployment.
+The synthetic read-only demo is deployed at
+[https://venturelens-ai-spark2scale.streamlit.app/](https://venturelens-ai-spark2scale.streamlit.app/).
+The deployed branch is `feature/project-ui`, with `app.py` as the entry point.
+The Streamlit Secrets loading fix was pushed in commit
+[`c256b4d`](https://github.com/Sparkers1218/venturelens-ai/commit/c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2).
+The hosted dashboard, fictional sample, navigation, theme switching, and
+disabled project-creation state were verified after restarting the app.
 
 ## What this deployment is
 
@@ -19,7 +20,19 @@ public synthetic-data presentation. Do not add real project, customer, or
 personal information. AI-provider, research-provider, OAuth, and database
 credentials are not required.
 
-## Before opening the Cloud console
+## Existing deployment
+
+Evaluators can open the public URL above without an account. The application
+visibly identifies itself as a public evaluator demo and contains only
+fictional sample data. Do not enter real project, customer, or personal data.
+
+The original startup failure occurred because Pydantic settings did not read
+Streamlit Community Cloud's separate `st.secrets` store. The app now reads
+root-level Streamlit Secrets directly while preserving process-environment
+and `.env` precedence. Production still fails closed when `DEMO_MODE` is
+absent or false.
+
+## Recreate or inspect the Cloud app
 
 1. Sign in to Streamlit Community Cloud using a GitHub account authorized to
    access `Sparkers1218/venturelens-ai`. Approve the Community Cloud OAuth
@@ -27,14 +40,16 @@ credentials are not required.
 2. Do not add `.env`, `.streamlit/secrets.toml`, API keys, or database
    credentials to Git. `.streamlit/secrets.toml` is ignored by `.gitignore`.
 
-## Create the app
+## Configure a new or existing app
 
-1. Select **Create app** (or **Deploy an app**) and choose:
+1. If the evaluator app already exists, open its settings; otherwise select
+   **Create app** (or **Deploy an app**).
+2. Select:
    - Repository: `Sparkers1218/venturelens-ai`
    - Branch: `feature/project-ui`
    - Main file path: `app.py`
-2. Open **Advanced settings** before deploying and select **Python 3.12**.
-3. In the **Secrets** field, enter this TOML exactly:
+3. Open **Advanced settings** before deploying and select **Python 3.11**.
+4. In the **Secrets** field, enter this TOML exactly:
 
    ```toml
    APP_ENV = "production"
@@ -48,12 +63,13 @@ credentials are not required.
    does not rely on the host exporting them as process environment variables.
    Process environment variables still take precedence over `.env`, which
    takes precedence over Streamlit Secrets.
-4. Select **Deploy** and wait for the app to finish starting. The first
-   dependency installation can take several minutes.
+5. Select **Deploy** and wait for the app to finish starting. The first
+   dependency installation can take several minutes. The verified deployment
+   used Python 3.11.18.
 
 ## Verify before sharing
 
-Open the generated HTTPS URL in a private/incognito browser window and confirm:
+Open the deployed HTTPS URL in a private/incognito browser window and confirm:
 
 - The page loads without an error and displays the **PUBLIC EVALUATOR DEMO**
   notice.
@@ -66,17 +82,24 @@ Open the generated HTTPS URL in a private/incognito browser window and confirm:
   enabled.
 - No real project data or credentials are present.
 
+Verified on the current deployment: the dashboard and fictional sample
+loaded; My Projects and Create Project navigation worked; project creation
+displayed the read-only message; and the light/dark controls switched
+successfully. Deployment logs showed the Uvicorn server started. The browser
+console also showed a 404 resource response and Vega chart warnings, but the
+application remained usable. A separate private/incognito walkthrough and
+every settings/profile page were not part of this verification.
+
 If startup fails, check the Community Cloud app logs and confirm that the two
 Secrets entries above were saved. Never paste secrets into a public issue or
 commit them to the repository.
 
 ## Evaluator access and operating limits
 
-Once the checks pass, copy the app's public HTTPS URL and share it with the
-evaluators. The app is intentionally public and requires no evaluator account.
-All visitors see the same fictional sample. Its database exists only in the
-running app process and is recreated when the process restarts; it is not a
-persistent evaluator workspace.
+Share the public HTTPS URL above with evaluators. The app is intentionally
+public and requires no evaluator account. All visitors see the same fictional
+sample. Its database exists only in the running app process and is recreated
+when the process restarts; it is not a persistent evaluator workspace.
 
 There is no app-level authentication, authorization, project ownership, or
 tenant isolation. Do not enable write workflows or use a real shared database

@@ -123,11 +123,24 @@ Source notes and competitor records are manually entered and are not
 independently verified. The completeness indicator measures only whether
 fields are filled; it is not a market or success score.
 
-The deployment-ready source is published on `feature/project-ui`, but no
-Streamlit Community Cloud app or public URL has been created or verified. The
-public evaluator deployment uses `APP_ENV="production"` and `DEMO_MODE=true`
-in the host's Secrets settings; it does not require a database URL, OAuth
-credentials, AI key, or research key.
+### Public evaluator demo
+
+The public, synthetic read-only evaluator demo is available at
+[venturelens-ai-spark2scale.streamlit.app](https://venturelens-ai-spark2scale.streamlit.app/).
+It displays the **PUBLIC EVALUATOR DEMO** notice and fictional sample data.
+Evaluators do not need an account. The demo does not accept or persist their
+project data; it uses temporary in-memory SQLite and disables writes. Do not
+enter real project, customer, or personal information.
+
+The Streamlit Community Cloud startup issue caused by settings not reading
+`st.secrets` has been fixed. Hosted dashboard, sample data, navigation, theme
+switching, and disabled project creation were verified. See
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for deployment configuration and
+limitations. This public demo is not authenticated multi-user hosting.
+
+The public evaluator deployment uses `APP_ENV="production"` and
+`DEMO_MODE=true` in the host's Secrets settings; it does not require a
+database URL, OAuth credentials, AI key, or research key.
 Public multi-user project storage would require authentication, ownership
 enforcement, persistent database hosting, migrations, and cross-user security
 tests.

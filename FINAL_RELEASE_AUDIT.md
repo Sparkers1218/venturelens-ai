@@ -7,26 +7,32 @@ place. A separate public evaluator mode is now prepared: it forces an isolated
 in-memory SQLite database, seeds one clearly labeled fictional project and
 rule-based report, disables UI mutation controls, and enables SQLite
 query-only protection. It ignores any configured `DATABASE_URL`. Production
-startup fails unless this demo mode is enabled.
+startup fails unless this demo mode is enabled. Streamlit Cloud settings now
+load directly from `st.secrets`; the hosted startup failure caused by the
+missing Secrets source is fixed.
 
-The current local worktree passes **15 pytest tests**. Python compilation,
-Streamlit/Secrets TOML parsing, whitespace checks, and Streamlit AppTest
-coverage of demo startup and read-only behavior also passed. No Community
-Cloud deployment has been created or tested, so there is no public URL yet.
+The complete suite passes **17 pytest tests**. Python compilation,
+Streamlit/Secrets TOML parsing, whitespace checks, and AppTest coverage of
+Secrets loading, production startup, and read-only behavior also passed. The
+deployed app at
+[venturelens-ai-spark2scale.streamlit.app](https://venturelens-ai-spark2scale.streamlit.app/)
+was manually checked: the synthetic dashboard loaded, navigation worked,
+project creation was disabled, and light/dark switching worked.
 
-**Release verdict: READY FOR CONTROLLED PUBLIC DEMO — deployment is still
-pending the repository owner's GitHub/Community Cloud action.** The app is
-not ready for authenticated or public multi-user project storage.
+**Release verdict: READY FOR CONTROLLED PUBLIC DEMO.** This verdict applies
+only to the anonymous synthetic read-only demo. The app is not ready for
+authenticated or public multi-user project storage.
 
 ## 2. Branch and working-tree status
 
 - Current branch: `feature/project-ui`, tracking `origin/feature/project-ui`.
-- Commit `a28ca4fbdd05b9c42595721b908a286ee1fbf6cb` was pushed to the
-  existing `https://github.com/Sparkers1218/venturelens-ai.git` remote and
-  independently verified on GitHub.
-- The only remaining untracked worktree file is `theme_review.txt`; it is
-  experimental and was intentionally not committed. `.env`, Streamlit secrets,
-  `.venv`, and `venturelens.db` were excluded; the database file was not read.
+- The Streamlit Secrets fix was pushed to the existing
+  `https://github.com/Sparkers1218/venturelens-ai.git` remote as commit
+  `c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2`; the remote branch head was
+  independently verified.
+- The pre-existing untracked `theme_review.txt` remains untouched and
+  uncommitted. `.env`, Streamlit secrets, `.venv`, and `venturelens.db` were
+  excluded; the database file was not read.
 - No branch switch, force push, reset, deletion, or change to `main` was made.
 - No local database, project data, or secret file was inspected or removed.
 
@@ -34,7 +40,7 @@ not ready for authenticated or public multi-user project storage.
 
 | Check | Command or method | Result |
 |---|---|---|
-| Complete pytest suite | `.\.venv\Scripts\python.exe -m pytest -q` | **15 passed in 3.65s** |
+| Complete pytest suite | `.\.venv\Scripts\python.exe -m pytest -q` | **17 passed in 3.47s** |
 | Python compilation | `.\.venv\Scripts\python.exe -m compileall -q app.py config core database ui tests` | Passed |
 | Streamlit config and documented Secrets TOML | Python `tomllib` parser | Both parsed successfully |
 | Whitespace errors | `git --no-pager diff --check` | Passed; no whitespace errors |
@@ -43,10 +49,14 @@ not ready for authenticated or public multi-user project storage.
 | Database isolation | Focused evaluator-mode test | Configured file URL ignored; target file not created; in-memory SQLite reports `query_only=1`; attempted schema write rejected |
 | Production fail-closed behavior | Focused AppTest | `APP_ENV=production` without demo mode stops before database initialization |
 | Existing local workflow | Complete pytest suite | Project/competitor/source/report persistence, reopening, theme and existing workflow tests passed |
+| Hosted Cloud startup | Community Cloud logs and public page | Reboot recloned `feature/project-ui`; Uvicorn started; production guard error cleared |
+| Hosted UI | Browser walkthrough | Synthetic evaluator label/sample, My Projects, read-only Create Project, and light/dark switching verified |
 
 Tests ran in the existing `.venv`; no dependency was installed or changed.
-The actual hosted Community Cloud startup, generated URL, and evaluator browser
-session remain unverified.
+The hosted browser console showed a 404 resource response and Vega chart
+warnings, but the verified pages remained usable. A private/incognito
+walkthrough, downloaded JSON bytes, and every navigation page were not
+verified.
 
 ## 4. Implemented features
 
@@ -91,7 +101,6 @@ session remain unverified.
   evidence attribution.
 - Persistent cloud database, Alembic migration history, backup/retention
   operations, and cross-user security tests.
-- A deployed Streamlit Community Cloud app and public evaluator URL.
 
 ## 7. PS49 requirements compliance
 
@@ -115,19 +124,19 @@ demo's fictional sample as real product validation.
 | 13 | Report export | **IMPLEMENTED BUT NOT VERIFIED** | JSON download button in [ui/views.py](ui/views.py); AppTest checks availability, not downloaded bytes. |
 | 14 | Project saving and retrieval | **IMPLEMENTED AND VERIFIED** | Repository persistence and local workflow in [database/repository.py](database/repository.py) and [tests/test_mvp.py](tests/test_mvp.py). |
 | 15 | Dashboard and visual analytics | **IMPLEMENTED AND VERIFIED** | Descriptive project/report counts and input-completeness chart in `render_dashboard()` in [ui/views.py](ui/views.py); not market analytics. |
-| 16 | Navigation and theme consistency | **IMPLEMENTED AND VERIFIED** | Navigation in [ui/components.py](ui/components.py), theme in [ui/theme.py](ui/theme.py); AppTest and theme tests passed. No current hosted-browser check. |
+| 16 | Navigation and theme consistency | **IMPLEMENTED AND VERIFIED** | Navigation in [ui/components.py](ui/components.py), theme in [ui/theme.py](ui/theme.py); AppTest passed, and hosted navigation plus light/dark switching were manually verified. |
 
 ## 8. UI verification status
 
 | Area | Verification |
 |---|---|
-| Dashboard | AppTest starts in production demo mode, checks the synthetic notice and sample project. |
-| My Projects / workspace | Existing tests reopen a local project; evaluator mode exposes sample navigation and read-only workspace. |
-| Create Project | Local workflow remains tested; evaluator page shows a disabled-mode message and no project fields. |
+| Dashboard | AppTest checks production demo startup, synthetic notice, and sample project; hosted dashboard and synthetic sample loaded. |
+| My Projects / workspace | Existing tests reopen a local project; hosted My Projects navigation displayed the sample. |
+| Create Project | Local workflow remains tested; hosted evaluator page displayed the read-only message and no project fields. |
 | Competitor and research pages | Existing local tests exercise persistence; evaluator workspace inputs and submit/remove actions are disabled. |
 | Analysis report | Existing tests generate/reopen local report; evaluator sample report renders and download button is present. |
 | Settings/profile/navigation | Existing AppTest navigates pages; evaluator text discloses no authentication and synthetic-only scope. |
-| Theme | Existing theme tests passed; the previous local audit observed a browser theme change. This continuation did not test a browser or hosted URL. |
+| Theme | Existing theme tests passed; hosted light/dark switching was manually verified in both directions. |
 | Accessibility/responsive behavior | Not fully reviewed. |
 
 ## 9. Database verification status
@@ -138,6 +147,10 @@ demo's fictional sample as real product validation.
 - The evaluator-mode test verifies that an external configured file URL is
   ignored, the file is not created, the in-memory database is query-only, and a
   write attempt raises an SQLite error.
+- The hosted UI identified its storage as temporary in-memory SQLite and
+  read-only. The Cloud process itself was not directly introspected; the
+  database isolation claim is supported by the deployed configuration and
+  automated evaluator-mode tests.
 - The normal local database workflow remains unchanged when `DEMO_MODE` is
   false.
 - PostgreSQL behavior against a real server remains unverified.
@@ -163,8 +176,8 @@ file's bytes and round-trip JSON parse were not tested.
 - No database, OAuth, AI, or research credentials are required by the
   evaluator deployment. `.env` and Streamlit secrets files remain ignored by
   Git; do not commit secrets.
-- Public hosting/platform security, HTTPS, account access, dependency
-  operations, and service availability remain outside local verification.
+- The hosting provider's security posture, account controls, dependency
+  operations, and uptime are not independently audited here.
 
 ## 12. AI integration status
 
@@ -181,19 +194,29 @@ publishers, or substantiate market claims.
 
 ## 14. Deployment readiness
 
-The source is pushed and prepared for Streamlit Community Cloud with Python
-3.12 and Secrets:
+The app is deployed on Streamlit Community Cloud at
+[https://venturelens-ai-spark2scale.streamlit.app/](https://venturelens-ai-spark2scale.streamlit.app/),
+using branch `feature/project-ui` and entry point `app.py`. The verified
+runtime logs reported Python 3.11.18. The required Secrets are:
 
 ```toml
 APP_ENV = "production"
 DEMO_MODE = true
 ```
 
-The exact steps are in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). The Cloud
-console was opened, but it displayed **Continue to sign-in** and no authorized
-account session was available. No app was created and no deployment was
-attempted. Therefore **there is no public URL to share yet**. After sign-in,
-deployment, and the hosted checks, the generated URL can be shared.
+The deployment initially failed because Pydantic settings did not read
+Streamlit's separate `st.secrets` store. A custom source was added in
+[config/settings.py](config/settings.py), with tests for Cloud Secrets,
+environment precedence, and production fail-closed behavior. After pushing
+the fix, the app was rebooted; Cloud logs showed a fresh repository clone and
+`Uvicorn server started`. The public dashboard then rendered the synthetic
+demo. Hosted navigation, disabled project creation, and both theme options
+were checked. Browser logs also showed a 404 resource response and Vega chart
+warnings, without preventing use.
+
+The exact redeployment steps are in
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). The public URL is available to
+share for the synthetic evaluator demo; evaluator accounts are not required.
 
 This verdict is limited to the anonymous synthetic read-only demo. It does
 not approve public multi-user project storage or claim production-grade
@@ -210,21 +233,24 @@ authentication, data isolation, or persistent cloud storage.
 - Added production fail-closed startup and read-only UI behavior.
 - Added evaluator-mode configuration, focused tests, Community Cloud config,
   and deployment guide.
+- Added a direct `st.secrets` settings source while preserving environment and
+  `.env` precedence; added coverage for secrets loading and fail-closed
+  production startup.
+- Updated the deployment guide and release documentation with the deployed
+  URL and actual hosted verification.
 - Updated [README.md](README.md), [PROJECT_STATUS.md](PROJECT_STATUS.md), and
   this report.
 - Preserved existing UI, theme, local persistence, and unrelated dirty work.
-- No dependencies, credentials, or deployment services were added or invoked.
+- No dependencies or credentials were added. The existing Cloud app was
+  rebooted after the fix and tests were verified.
 
 ## 16. Known issues and remaining manual checks
 
-- The owner must sign in to Streamlit Community Cloud using GitHub and approve
-  its requested repository access for `Sparkers1218/venturelens-ai`.
-- Then deploy `feature/project-ui` with `app.py`, Python 3.12, and the Secrets
-  values above; inspect startup logs and run the hosted checks.
-- Open the generated public URL in a private browser and confirm the sample,
-  read-only controls, and JSON download before sharing.
-- Actual Cloud deployment, hosted URL access, persistence/restart behavior in
-  the hosting environment, and public browser rendering are not verified.
+- The public URL is deployed and accessible. A private/incognito browser
+  walkthrough and all settings/profile pages were not tested.
+- Streamlit Cloud startup and page rendering were verified after reboot.
+  Persistence across a Cloud process restart was not independently inspected;
+  the demo is designed to recreate its synthetic data in memory on startup.
 - Actual downloaded JSON contents, PostgreSQL integration, accessibility, and
   responsive breakpoints remain unverified.
 
@@ -260,7 +286,9 @@ Run the complete test suite:
 
 ### Verified automatically
 
-- [x] Complete test suite: 15 passed.
+- [x] Complete test suite: 17 passed in 3.47s.
+- [x] Settings tests cover Streamlit Secrets, environment precedence, and
+  production mode without demo enabled.
 - [x] Production evaluator startup and synthetic notice through AppTest.
 - [x] Local Streamlit health endpoint returned HTTP 200.
 - [x] Demo mode ignores a configured file-backed database URL.
@@ -271,10 +299,13 @@ Run the complete test suite:
 
 ### Verified manually
 
-- [x] Earlier local audit manually checked a light/dark theme change.
-- [ ] Community Cloud sign-in and repository authorization.
-- [ ] Public Community Cloud deployment and generated URL.
-- [ ] Hosted private-browser walkthrough before evaluator sharing.
+- [x] Cloud reboot fetched the configured `feature/project-ui` branch and
+  startup logs showed Uvicorn running.
+- [x] Public URL opened with the evaluator notice and fictional sample.
+- [x] My Projects navigation and read-only Create Project state.
+- [x] Hosted light/dark theme toggle in both directions.
+- [ ] Separate private/incognito browser walkthrough and settings/profile
+  pages.
 
 ### Not verified
 
@@ -286,8 +317,9 @@ Run the complete test suite:
 
 ## 19. Recommended next action
 
-Sign in to Streamlit Community Cloud, approve repository access for
-`Sparkers1218/venturelens-ai`, and deploy the already-pushed branch using
-[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). Copy the generated HTTPS URL only
-after the manual checks above pass. This account authorization is the current
-blocker; no deployment has been started.
+Share
+[https://venturelens-ai-spark2scale.streamlit.app/](https://venturelens-ai-spark2scale.streamlit.app/)
+with evaluators as a synthetic, read-only demonstration. No additional
+account authorization is required for evaluator access. Do not enter real
+project or personal data, and do not present this as an authenticated
+multi-user service.
