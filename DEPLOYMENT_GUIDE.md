@@ -91,9 +91,10 @@ navigation page in both themes at 320, 375, 390, 430, 768, 1024, and 1440 CSS
 pixels without observed overflow or clipped content. That responsive sweep
 was not performed against the public deployment. During the latest UI
 verification, Cloud application logs were not directly inspected. The browser
-console showed non-blocking resource and chart warnings, but the verified
-pages remained usable. A separate private/incognito walkthrough and every
-settings/profile page were not part of this verification.
+console showed resource 404s, aborted status-page embed requests, Vega chart
+warnings, and one transient WebSocket close (1006); the verified page remained
+responsive. A separate private/incognito walkthrough and every settings/profile
+page were not part of this verification.
 
 If startup fails, check the Community Cloud app logs and confirm that the two
 Secrets entries above were saved. Never paste secrets into a public issue or

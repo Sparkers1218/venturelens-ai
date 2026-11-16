@@ -59,10 +59,11 @@ authenticated or public multi-user project storage.
 | Responsive UI | Local browser sweep | All ten navigation pages, both themes, and CSS viewport widths 320, 375, 390, 430, 768, 1024, and 1440; no observed horizontal overflow or clipped content |
 
 Tests ran in the existing `.venv`; no dependency was installed or changed.
-The hosted browser console showed non-blocking resource and Vega chart
-warnings, but the verified pages remained usable. A private/incognito
-walkthrough, downloaded JSON bytes, and every hosted navigation page were not
-verified.
+The hosted browser console showed resource 404s, aborted status-page embed
+requests, Vega chart warnings, and one transient WebSocket close (1006).
+Navigation and theme controls remained responsive; these console events were
+not investigated against Cloud logs. A private/incognito walkthrough,
+downloaded JSON bytes, and every hosted navigation page were not verified.
 
 ## 4. Implemented features
 
@@ -221,9 +222,10 @@ demo. Hosted navigation to My Projects and Create Project, the read-only
 creation state, and both theme directions were checked after the UI recovery
 commit. Local browser verification covered all ten pages, both themes, and
 the requested viewport widths; public deployment was not separately swept at
-every width. Browser console output included non-blocking resource and Vega
-chart warnings. Cloud application logs were not directly inspected during
-this UI recovery verification.
+every width. Browser console output included resource 404s, aborted
+status-page embed requests, Vega chart warnings, and one transient WebSocket
+close (1006). The page continued responding; Cloud application logs were not
+directly inspected during this UI recovery verification.
 
 The exact redeployment steps are in
 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). The public URL is available to

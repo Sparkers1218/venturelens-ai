@@ -61,7 +61,10 @@
   navigation to My Projects and Create Project worked; project creation
   displayed the read-only restriction. The public light/dark control switched
   successfully in both directions. The app loaded without a startup-guard
-  error; browser console showed non-blocking resource/chart warnings.
+  error. Browser-console observations included resource 404s, aborted status
+  embed requests, Vega warnings, and one transient WebSocket close (1006);
+  navigation and theme controls remained responsive. Cloud logs were not
+  inspected during this UI review.
 - A local browser sweep covered all ten navigation pages, both themes, and
   viewport widths 320, 375, 390, 430, 768, 1024, and 1440 CSS pixels. No
   horizontal overflow or clipped content was observed. This was not a
