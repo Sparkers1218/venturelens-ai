@@ -54,11 +54,18 @@
 - The deployed public evaluator demo is
   [venturelens-ai-spark2scale.streamlit.app](https://venturelens-ai-spark2scale.streamlit.app/).
   The Cloud app is configured for branch `feature/project-ui` and entry point
-  `app.py`. The settings fix was pushed in commit
-  `c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2`.
-- The hosted dashboard, synthetic sample, navigation, light/dark toggle, and
-  read-only project-creation state were manually verified. Cloud startup logs
-  show the server started; no production startup-guard failure remained.
+  `app.py`. The Streamlit Secrets fix is in commit
+  `c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2`; the UI recovery is in commit
+  `8e9c665f41461f2e054bd48a3c527eaf60233abd`.
+- The hosted dashboard and synthetic sample were manually verified. Public
+  navigation to My Projects and Create Project worked; project creation
+  displayed the read-only restriction. The public light/dark control switched
+  successfully in both directions. The app loaded without a startup-guard
+  error; browser console showed non-blocking resource/chart warnings.
+- A local browser sweep covered all ten navigation pages, both themes, and
+  viewport widths 320, 375, 390, 430, 768, 1024, and 1440 CSS pixels. No
+  horizontal overflow or clipped content was observed. This was not a
+  viewport-by-viewport test of the public Cloud deployment.
 - The verified Cloud runtime was Python 3.11.18. Community Cloud Secrets for
   the demo are:
 
@@ -75,7 +82,7 @@
 
 ## Verification
 
-- `.venv\Scripts\python.exe -m pytest -q`: **17 passed in 3.47s**.
+- `.venv\Scripts\python.exe -m pytest -q`: **20 passed in 5.39s**.
 - Python compilation, Streamlit config/Secrets TOML parsing, and
   `git diff --check` passed.
 - AppTest verified production evaluator startup from mocked Streamlit Secrets,
@@ -84,8 +91,10 @@
   fail-closed behavior. Configuration tests verify Streamlit Secrets loading,
   environment-variable precedence, and the missing-demo safety case.
 - Hosted browser verification confirmed the public evaluator notice, fictional
-  sample, My Projects navigation, disabled project creation, and successful
-  switching between light and dark themes.
+  sample, My Projects/Create Project navigation, read-only project-creation
+  restriction, and successful switching between light and dark themes.
+- Local browser verification covered every navigation page and the requested
+  responsive widths in both themes.
 - A local Streamlit process returned HTTP 200 from `/healthz`; the configured
   external database file was not created.
 - Full deployment and verification details are in
@@ -103,5 +112,7 @@
 - PostgreSQL connectivity has not been verified against a live server.
 - Public demo data is in memory only and is not persistent across process
   restarts.
+- Responsive layouts were checked locally at the requested viewport widths;
+  those viewport checks have not been repeated against the public deployment.
 - The public URL is accessible without evaluator authentication by design.
   Keep the demo synthetic and read-only; do not use it for shared real data.

@@ -5,8 +5,9 @@ The synthetic read-only demo is deployed at
 The deployed branch is `feature/project-ui`, with `app.py` as the entry point.
 The Streamlit Secrets loading fix was pushed in commit
 [`c256b4d`](https://github.com/Sparkers1218/venturelens-ai/commit/c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2).
-The hosted dashboard, fictional sample, navigation, theme switching, and
-disabled project-creation state were verified after restarting the app.
+The hosted dashboard, fictional sample, navigation, theme switching in both
+directions, and disabled project-creation state were verified after UI
+recovery commit `8e9c665f41461f2e054bd48a3c527eaf60233abd`.
 
 ## What this deployment is
 
@@ -85,10 +86,14 @@ Open the deployed HTTPS URL in a private/incognito browser window and confirm:
 Verified on the current deployment: the dashboard and fictional sample
 loaded; My Projects and Create Project navigation worked; project creation
 displayed the read-only message; and the light/dark controls switched
-successfully. Deployment logs showed the Uvicorn server started. The browser
-console also showed a 404 resource response and Vega chart warnings, but the
-application remained usable. A separate private/incognito walkthrough and
-every settings/profile page were not part of this verification.
+successfully in both directions. A local browser sweep also covered every
+navigation page in both themes at 320, 375, 390, 430, 768, 1024, and 1440 CSS
+pixels without observed overflow or clipped content. That responsive sweep
+was not performed against the public deployment. During the latest UI
+verification, Cloud application logs were not directly inspected. The browser
+console showed non-blocking resource and chart warnings, but the verified
+pages remained usable. A separate private/incognito walkthrough and every
+settings/profile page were not part of this verification.
 
 If startup fails, check the Community Cloud app logs and confirm that the two
 Secrets entries above were saved. Never paste secrets into a public issue or

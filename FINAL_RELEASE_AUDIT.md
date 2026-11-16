@@ -11,13 +11,16 @@ startup fails unless this demo mode is enabled. Streamlit Cloud settings now
 load directly from `st.secrets`; the hosted startup failure caused by the
 missing Secrets source is fixed.
 
-The complete suite passes **17 pytest tests**. Python compilation,
+The complete suite passes **20 pytest tests**. Python compilation,
 Streamlit/Secrets TOML parsing, whitespace checks, and AppTest coverage of
 Secrets loading, production startup, and read-only behavior also passed. The
 deployed app at
 [venturelens-ai-spark2scale.streamlit.app](https://venturelens-ai-spark2scale.streamlit.app/)
-was manually checked: the synthetic dashboard loaded, navigation worked,
-project creation was disabled, and light/dark switching worked.
+was manually checked: the synthetic dashboard loaded, My Projects and Create
+Project navigation worked, project creation was disabled, and light/dark
+switching worked in both directions. A local browser sweep covered all ten
+pages, both themes, and the requested viewport widths without observed
+overflow or clipped content.
 
 **Release verdict: READY FOR CONTROLLED PUBLIC DEMO.** This verdict applies
 only to the anonymous synthetic read-only demo. The app is not ready for
@@ -29,7 +32,9 @@ authenticated or public multi-user project storage.
 - The Streamlit Secrets fix was pushed to the existing
   `https://github.com/Sparkers1218/venturelens-ai.git` remote as commit
   `c256b4d8c2fd6f33f3c5991040ccb27c4c005fe2`; the remote branch head was
-  independently verified.
+  independently verified. UI recovery was pushed as
+  `8e9c665f41461f2e054bd48a3c527eaf60233abd`; the remote branch head was
+  independently confirmed at that commit before this documentation update.
 - The pre-existing untracked `theme_review.txt` remains untouched and
   uncommitted. `.env`, Streamlit secrets, `.venv`, and `venturelens.db` were
   excluded; the database file was not read.
@@ -40,7 +45,7 @@ authenticated or public multi-user project storage.
 
 | Check | Command or method | Result |
 |---|---|---|
-| Complete pytest suite | `.\.venv\Scripts\python.exe -m pytest -q` | **17 passed in 3.47s** |
+| Complete pytest suite | `.\.venv\Scripts\python.exe -m pytest -q` | **20 passed in 5.39s** |
 | Python compilation | `.\.venv\Scripts\python.exe -m compileall -q app.py config core database ui tests` | Passed |
 | Streamlit config and documented Secrets TOML | Python `tomllib` parser | Both parsed successfully |
 | Whitespace errors | `git --no-pager diff --check` | Passed; no whitespace errors |
@@ -50,12 +55,13 @@ authenticated or public multi-user project storage.
 | Production fail-closed behavior | Focused AppTest | `APP_ENV=production` without demo mode stops before database initialization |
 | Existing local workflow | Complete pytest suite | Project/competitor/source/report persistence, reopening, theme and existing workflow tests passed |
 | Hosted Cloud startup | Community Cloud logs and public page | Reboot recloned `feature/project-ui`; Uvicorn started; production guard error cleared |
-| Hosted UI | Browser walkthrough | Synthetic evaluator label/sample, My Projects, read-only Create Project, and light/dark switching verified |
+| Hosted UI | Browser walkthrough after UI recovery | Synthetic evaluator label/sample, My Projects and Create Project navigation, read-only Create Project state, and light/dark switching in both directions verified |
+| Responsive UI | Local browser sweep | All ten navigation pages, both themes, and CSS viewport widths 320, 375, 390, 430, 768, 1024, and 1440; no observed horizontal overflow or clipped content |
 
 Tests ran in the existing `.venv`; no dependency was installed or changed.
-The hosted browser console showed a 404 resource response and Vega chart
+The hosted browser console showed non-blocking resource and Vega chart
 warnings, but the verified pages remained usable. A private/incognito
-walkthrough, downloaded JSON bytes, and every navigation page were not
+walkthrough, downloaded JSON bytes, and every hosted navigation page were not
 verified.
 
 ## 4. Implemented features
@@ -137,7 +143,8 @@ demo's fictional sample as real product validation.
 | Analysis report | Existing tests generate/reopen local report; evaluator sample report renders and download button is present. |
 | Settings/profile/navigation | Existing AppTest navigates pages; evaluator text discloses no authentication and synthetic-only scope. |
 | Theme | Existing theme tests passed; hosted light/dark switching was manually verified in both directions. |
-| Accessibility/responsive behavior | Not fully reviewed. |
+| Responsive behavior | Locally checked at all requested widths in both themes across all ten pages; no overflow/clipping observed. Public deployment was not separately swept at every width. |
+| Accessibility | Not fully reviewed. |
 
 ## 9. Database verification status
 
@@ -210,9 +217,13 @@ Streamlit's separate `st.secrets` store. A custom source was added in
 environment precedence, and production fail-closed behavior. After pushing
 the fix, the app was rebooted; Cloud logs showed a fresh repository clone and
 `Uvicorn server started`. The public dashboard then rendered the synthetic
-demo. Hosted navigation, disabled project creation, and both theme options
-were checked. Browser logs also showed a 404 resource response and Vega chart
-warnings, without preventing use.
+demo. Hosted navigation to My Projects and Create Project, the read-only
+creation state, and both theme directions were checked after the UI recovery
+commit. Local browser verification covered all ten pages, both themes, and
+the requested viewport widths; public deployment was not separately swept at
+every width. Browser console output included non-blocking resource and Vega
+chart warnings. Cloud application logs were not directly inspected during
+this UI recovery verification.
 
 The exact redeployment steps are in
 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). The public URL is available to
@@ -236,6 +247,12 @@ authentication, data isolation, or persistent cloud storage.
 - Added a direct `st.secrets` settings source while preserving environment and
   `.env` precedence; added coverage for secrets loading and fail-closed
   production startup.
+- Restored and polished the existing VentureLens/Spark2Scale UI without
+  replacing application workflows; added responsive light/dark styling and
+  clarified team branding. Updated tests for theme styling and demo branding.
+- Verified theme switching in both directions and responsive layouts locally
+  across ten pages and all requested viewport widths; separately rechecked
+  public demo navigation and its read-only synthetic state.
 - Updated the deployment guide and release documentation with the deployed
   URL and actual hosted verification.
 - Updated [README.md](README.md), [PROJECT_STATUS.md](PROJECT_STATUS.md), and
@@ -251,8 +268,9 @@ authentication, data isolation, or persistent cloud storage.
 - Streamlit Cloud startup and page rendering were verified after reboot.
   Persistence across a Cloud process restart was not independently inspected;
   the demo is designed to recreate its synthetic data in memory on startup.
-- Actual downloaded JSON contents, PostgreSQL integration, accessibility, and
-  responsive breakpoints remain unverified.
+- Actual downloaded JSON contents, PostgreSQL integration, and accessibility
+  remain unverified. Responsive checks were local; the public deployment was
+  not separately tested at every requested width.
 
 ## 17. Windows commands
 
@@ -286,7 +304,7 @@ Run the complete test suite:
 
 ### Verified automatically
 
-- [x] Complete test suite: 17 passed in 3.47s.
+- [x] Complete test suite: 20 passed in 5.39s.
 - [x] Settings tests cover Streamlit Secrets, environment precedence, and
   production mode without demo enabled.
 - [x] Production evaluator startup and synthetic notice through AppTest.
@@ -302,8 +320,11 @@ Run the complete test suite:
 - [x] Cloud reboot fetched the configured `feature/project-ui` branch and
   startup logs showed Uvicorn running.
 - [x] Public URL opened with the evaluator notice and fictional sample.
-- [x] My Projects navigation and read-only Create Project state.
-- [x] Hosted light/dark theme toggle in both directions.
+- [x] Public My Projects and Create Project navigation; creation restriction
+  displayed.
+- [x] Public light/dark theme toggle in both directions.
+- [x] Local browser sweep of all ten pages, both themes, and widths 320, 375,
+  390, 430, 768, 1024, and 1440 CSS pixels without observed overflow/clipping.
 - [ ] Separate private/incognito browser walkthrough and settings/profile
   pages.
 
@@ -311,7 +332,8 @@ Run the complete test suite:
 
 - [ ] Actual downloaded report bytes and JSON round trip.
 - [ ] PostgreSQL server integration.
-- [ ] Full accessibility and responsive viewport review.
+- [ ] Full accessibility review and public viewport-by-viewport responsive
+  sweep.
 - [ ] Authentication, ownership isolation, and public multi-user behavior (not
   implemented and not claimed).
 
