@@ -7,6 +7,7 @@ from threading import RLock
 
 from sqlalchemy import Engine, create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from config.settings import get_settings
 from database.models import Base
@@ -17,8 +18,13 @@ _initialized_engines: set[Engine] = set()
 
 
 def create_database_engine(database_url: str) -> Engine:
-    connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    engine = create_engine(database_url, connect_args=connect_args)
+    connect_args = (
+        {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+    )
+    engine_options: dict[str, object] = {"connect_args": connect_args}
+    if database_url in {"sqlite://", "sqlite:///:memory:"}:
+        engine_options["poolclass"] = StaticPool
+    engine = create_engine(database_url, **engine_options)
 
     if database_url.startswith("sqlite"):
         @event.listens_for(engine, "connect")
@@ -33,7 +39,23 @@ def create_database_engine(database_url: str) -> Engine:
 
 @lru_cache(maxsize=1)
 def get_engine() -> Engine:
-    return create_database_engine(get_settings().database_url)
+    settings = get_settings()
+    database_url = "sqlite://" if settings.demo_mode else settings.database_url
+    return create_database_engine(database_url)
+
+
+def enable_read_only_sqlite(engine: Engine) -> None:
+    if engine.dialect.name != "sqlite" or engine.url.database not in {
+        None,
+        "",
+        ":memory:",
+    }:
+        raise ValueError(
+            "Read-only evaluator mode requires an in-memory SQLite database."
+        )
+
+    with engine.connect() as connection:
+        connection.exec_driver_sql("PRAGMA query_only = ON")
 
 
 def initialize_database(engine: Engine | None = None) -> None:

@@ -6,102 +6,89 @@
 |---|---|---|
 | 1. Project Foundation | Entry point, dependencies, configuration, documentation, and basic tests | Complete |
 | Project Charter | Initial project charter documentation | Complete |
-| 2. Core domain | Define and validate the idea, evidence, assumptions, risks, and experiment concepts | MVP implemented |
+| 2. Core domain | Idea briefs, evidence, assumptions, risks, and experiment concepts | MVP implemented |
 | 3. Persistence | SQLAlchemy models, SQLite/PostgreSQL URL support, and repositories | MVP implemented; additive upgrades included, Alembic and ownership pending |
-| 4. Authentication | OIDC integration and authenticated user context | Not started |
-| 5. Research integration | Research provider selection, retrieval, and evidence attribution | Not started |
-| 6. AI provider integration and evaluation | Provider evaluation, structured analysis, and clearly labelled fallbacks | Deterministic rule-based analysis engine implemented; no AI provider integration |
+| 4. Authentication | OIDC integration and authenticated user context | Not implemented |
+| 5. Research integration | Research provider, retrieval, and evidence attribution | Not implemented |
+| 6. AI provider integration and evaluation | Provider evaluation and structured analysis | Deterministic rule-based engine implemented; no AI provider |
 | 7. User workflows | Streamlit pages for idea intake, analysis, and saved reports | Local MVP implemented |
-| 8. Hardening and release | End-to-end tests, deployment configuration, operations, and release readiness | Not started |
-
-No AI provider has been selected. NVIDIA NIM remains a candidate pending
-verification of free access, usage limits, payment requirements, licensing,
-and deployment terms before adoption.
+| 8. Hardening and release | Deployment configuration and release verification | Read-only synthetic evaluator mode and Streamlit Community Cloud configuration prepared; hosted deployment not yet performed |
 
 ## Current implementation
 
-- The Streamlit app supports project creation, editing, search, reopening, and
-  deletion. Project fields include optional business model; competitor records
-  include audience, pricing, differentiation notes, and reference URL.
+- The normal local workflow supports project creation, editing, search,
+  reopening, and deletion, with persistent SQLite by default. PostgreSQL URL
+  configuration exists but has not been integration-tested against a server.
 - Navigation includes dashboard, My Projects, project creation, competitor
   insights, research, report review, derived notifications/activity, profile,
-  settings, and project workspace. Profile and settings explicitly reflect the
-  unauthenticated local-demo limitations.
-- SQLite persistence is initialized automatically; PostgreSQL can be selected
-  through `DATABASE_URL`.
-- Versioned rule-based reports cover problem/solution, customer definition,
-  competitor comparison, business-model considerations, strengths/weaknesses
-  of the brief, risks, assumptions, research references, experiments, and next
-  steps. JSON downloads and score/risk/priority charts are implemented.
-- 0-3 report scores measure input coverage/detail under explicit rubrics only;
-  they do not estimate viability or success.
-- Pydantic validates field lengths and manual source URLs.
-- Authentication, user ownership, live research, and AI-provider integration
-  are not implemented. The app explicitly labels itself a single-user local
-  demo.
-- The app is for a controlled local, single-user demonstration only. Do not
-  expose it as a public or shared multi-user service.
-- A root `.venv` exists and is used for local Python development.
-- All ten direct requirements are installed in `.venv`; `pip check` reports no
-  broken requirements.
-- The current automated suite passes; see the verification section below.
-- Provider access, credentials, endpoints, and model availability remain
-  unconfigured.
+  settings, and project workspace. The light/dark theme control is preserved.
+- Competitor and source records are manual entry only; they are not retrieved
+  or independently verified.
+- Versioned deterministic reports cover problem/solution, customer definition,
+  competitor comparison, business-model considerations, brief strengths and
+  gaps, risks, assumptions, research references, experiments, and next steps.
+  JSON download is available. Scores describe information coverage/detail, not
+  viability or success.
+- The public evaluator mode is separate from the local workflow. It overrides
+  any configured database URL with in-memory SQLite, seeds only clearly
+  labeled fictional sample data, disables write controls, enables SQLite's
+  query-only mode, and allows report JSON download.
+- Production startup fails closed unless `DEMO_MODE=true`. The prepared public
+  configuration requires `APP_ENV="production"` and `DEMO_MODE=true`.
+- The public sample is temporary and is recreated after process restart. It
+  accepts no evaluator project data and makes no authentication or ownership
+  claims.
+- Authentication, per-user ownership, tenant isolation, live research, and
+  AI-provider integration are not implemented. Do not use the app as a public
+  multi-user project service.
+- The sample alternatives and report are fictional demonstration content,
+  not real competitor findings, market research, or customer evidence.
 
-## Repository and environment status
+## Deployment status
 
-- Git repository initialized.
-- Intentional local branches: `main` and `feature/project-ui`.
-- GitHub remote `origin` is configured.
-- The initial project foundation is pushed to GitHub; `origin/main` points to
-  the initial project foundation commit.
-- The teammate invitation has been accepted, as previously confirmed. No claim
-  is made here about a teammate pushing a feature branch.
-- A project-root `.venv` is used for local Python development.
+- `.streamlit/config.toml` and [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
+  prepare the app for Streamlit Community Cloud.
+- Hosting still requires a GitHub branch containing these changes and an
+  authorized Community Cloud deployment. No public URL has been created or
+  tested.
+- Community Cloud Secrets for the prepared demo are:
 
-## Remaining foundation review tasks
+  ```toml
+  APP_ENV = "production"
+  DEMO_MODE = true
+  ```
 
-- Review dependency update and compatibility policy before deployment.
-- Confirm setup and test instructions in a clean checkout.
-- Plan deployment and install production dependencies in the deployment
-  environment separately from local development.
-
-## Product and architecture work still outstanding
-
-- Choose an OIDC provider and define its setup and callback configuration.
-- Select the research/search provider and confirm its supported API and terms.
-- Evaluate AI provider options, including NVIDIA NIM, and verify access,
-  licensing, costs, and deployment terms before selection.
-- Plan the production PostgreSQL schema and migrations, and implement ownership
-  enforcement for every project data operation before any authenticated/shared
-  deployment.
-- Add clearly labelled fallback behavior and tests for unavailable providers.
-- Plan deployment, operations, data retention, and privacy requirements.
-
-## MVP limitations
-
-- Database schema creation uses `create_all` with additive upgrades for current
-  project fields; there are no Alembic migrations.
-- The demo has no authentication or tenant isolation and is not suitable for
-  multi-user, public, or network-shared deployment. Use only in a controlled
-  local single-user demonstration.
-- Research is manual entry only; references are not fetched or verified.
-- Analysis is deterministic and rule-based, not an AI model or market
-  validation.
-- PostgreSQL support is configuration-level and has not been integration
-  tested against a PostgreSQL server.
+- No database, OAuth, AI, or research-provider credentials are needed for the
+  synthetic demo. Never commit secrets.
+- Public multi-user project storage remains out of scope until authentication,
+  ownership enforcement, persistent storage, migrations, and cross-user tests
+  exist.
 
 ## Verification
 
-- `.venv\Scripts\python.exe -m pytest -q`: 9 passed.
-- This is the existing recorded test baseline; tests were not rerun as part of
-  the documentation correction.
-- The Streamlit AppTest exercises project creation, competitor and source entry,
-  report generation, JSON download availability, project/report reopening, and
-  a fresh app run against the same SQLite file.
-- A legacy-schema test verifies additive upgrades preserve existing records.
-- SQLite persistence is tested after disposing and recreating the database engine.
-- A local browser smoke test verified the dashboard, empty-state metrics, project
-  form, project creation, and workspace rendering. Full responsive, theme-switch,
-  and accessibility review was not performed.
-- PostgreSQL integration and multi-user access have not been tested.
+- `.venv\Scripts\python.exe -m pytest -q`: **15 passed in 3.65s**.
+- Python compilation, Streamlit config/Secrets TOML parsing, and
+  `git diff --check` passed.
+- AppTest verified production evaluator startup, synthetic sample display,
+  disabled mutation controls, report download-button availability, database
+  URL isolation, SQLite write blocking, and production fail-closed behavior.
+- A local Streamlit process returned HTTP 200 from `/healthz`; the configured
+  external database file was not created.
+- No hosted deployment or public URL has been created. Full details and
+  remaining manual checks are in [FINAL_RELEASE_AUDIT.md](FINAL_RELEASE_AUDIT.md).
+
+## Known limitations and remaining work
+
+- No AI provider is configured; analysis is deterministic Python logic, not an
+  AI model. NVIDIA NIM remains only a candidate in [DECISIONS.md](DECISIONS.md).
+- No live competitor or research retrieval, source verification, or external
+  attribution is implemented.
+- No authentication or user/project ownership isolation exists.
+- There is no Alembic migration history. Existing local schema support is
+  limited to the explicit additive upgrades in `database/connection.py`.
+- PostgreSQL connectivity and Streamlit Community Cloud deployment have not
+  been verified against live services.
+- Public demo data is in memory only and is not persistent across process
+  restarts.
+- A deployed browser session, public URL access, and evaluator sharing still
+  require manual verification after deployment.

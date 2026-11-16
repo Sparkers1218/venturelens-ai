@@ -48,8 +48,28 @@ def build_rule_based_report(
     project: Mapping[str, str],
     competitors: Sequence[Mapping[str, str]],
     sources: Sequence[Mapping[str, str]],
+    *,
+    synthetic_demo: bool = False,
 ) -> dict[str, Any]:
     """Build an input-grounded report; scores measure brief coverage only."""
+    input_provenance = (
+        "Synthetic demonstration data; fictional and not user-provided."
+        if synthetic_demo
+        else "User-provided; not independently verified."
+    )
+    competitor_provenance = (
+        "Synthetic fictional example; not a real competitor or market finding."
+        if synthetic_demo
+        else "User-provided; not independently verified."
+    )
+    source_provenance = (
+        "Synthetic placeholder; not an external source."
+        if synthetic_demo
+        else (
+            "Manually entered source information; not retrieved or "
+            "independently verified by VentureLens AI."
+        )
+    )
     completed = [
         label for label, key in CONTEXT_FIELDS if project.get(key, "").strip()
     ]
@@ -62,7 +82,7 @@ def build_rule_based_report(
         {
             "field": label,
             "content": project[key],
-            "provenance": "User-provided; not independently verified.",
+            "provenance": input_provenance,
         }
         for label, key in CONTEXT_FIELDS
         if project.get(key, "").strip()
@@ -75,7 +95,7 @@ def build_rule_based_report(
             "target_audience": item.get("target_audience", ""),
             "pricing": item.get("pricing", ""),
             "differentiation_notes": item.get("differentiation_notes", ""),
-            "provenance": "User-provided; not independently verified.",
+            "provenance": competitor_provenance,
         }
         for item in competitors
     ]
@@ -85,10 +105,7 @@ def build_rule_based_report(
             "url": item.get("source_url", ""),
             "publisher": item.get("publisher", ""),
             "notes": item.get("summary", ""),
-            "provenance": (
-                "Manually entered source information; not retrieved or "
-                "independently verified by VentureLens AI."
-            ),
+            "provenance": source_provenance,
         }
         for item in sources
     ]
@@ -355,15 +372,23 @@ def build_rule_based_report(
     }
     dimensions_filled = sum(score["score"] > 0 for score in scores)
 
+    notice = (
+        "This report is a structured review of user-provided inputs. It is not "
+        "market research, independent validation, or a prediction of business "
+        "success. All scores measure information coverage or description detail."
+    )
+    if synthetic_demo:
+        notice = (
+            "Synthetic evaluator sample only: the project and all example records "
+            "are fictional and are not user data, external research, or market "
+            "findings. " + notice
+        )
+
     return {
         "schema_version": 2,
         "report_type": "Rule-based demo analysis (not AI-generated)",
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "notice": (
-            "This report is a structured review of user-provided inputs. It is not "
-            "market research, independent validation, or a prediction of business "
-            "success. All scores measure information coverage or description detail."
-        ),
+        "notice": notice,
         "project_name": project.get("name", ""),
         "executive_summary": (
             f"The brief includes {len(completed)} of {len(CONTEXT_FIELDS)} tracked "

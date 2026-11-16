@@ -1,6 +1,8 @@
 import streamlit as st
 from pydantic import ValidationError
 
+from ui.theme import apply_theme, render_theme_selector
+
 
 PAGES = (
     "Dashboard",
@@ -14,6 +16,16 @@ PAGES = (
     "Settings",
     "Project Workspace",
 )
+
+
+def render_app_header(app_name: str) -> None:
+    brand_column, theme_column = st.columns([4, 2], vertical_alignment="center")
+    with brand_column:
+        st.subheader(f"🔎 {app_name} · Intelligence Workspace")
+        st.caption("Better Questions. Stronger Ideas.")
+    with theme_column:
+        theme = render_theme_selector()
+    apply_theme(theme)
 
 
 def request_navigation(page: str, project_id: str | None = None) -> None:

@@ -2,7 +2,14 @@ from config.settings import Settings
 
 
 def test_settings_have_safe_defaults(monkeypatch) -> None:
-    for name in ("APP_NAME", "APP_ENV", "DEBUG", "LOG_LEVEL", "DATABASE_URL"):
+    for name in (
+        "APP_NAME",
+        "APP_ENV",
+        "DEBUG",
+        "LOG_LEVEL",
+        "DATABASE_URL",
+        "DEMO_MODE",
+    ):
         monkeypatch.delenv(name, raising=False)
 
     settings = Settings(_env_file=None)
@@ -12,6 +19,7 @@ def test_settings_have_safe_defaults(monkeypatch) -> None:
     assert settings.debug is False
     assert settings.log_level == "INFO"
     assert settings.database_url == "sqlite:///./venturelens.db"
+    assert settings.demo_mode is False
 
 
 def test_settings_read_environment_variables(monkeypatch) -> None:
@@ -23,6 +31,7 @@ def test_settings_read_environment_variables(monkeypatch) -> None:
         "DATABASE_URL",
         "postgresql+psycopg://user:password@localhost:5432/venturelens",
     )
+    monkeypatch.setenv("DEMO_MODE", "true")
 
     settings = Settings(_env_file=None)
 
@@ -33,3 +42,4 @@ def test_settings_read_environment_variables(monkeypatch) -> None:
     assert settings.database_url == (
         "postgresql+psycopg://user:password@localhost:5432/venturelens"
     )
+    assert settings.demo_mode is True

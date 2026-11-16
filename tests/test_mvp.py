@@ -386,6 +386,10 @@ def test_streamlit_demo_workflow_saves_a_reopenable_report(
 
     app = AppTest.from_file(str(app_path), default_timeout=20).run()
     assert not app.exception
+    assert app.radio(key="vl_theme").value == "Light"
+    app.radio(key="vl_theme").set_value("Dark").run()
+    assert not app.exception
+    assert app.session_state["vl_theme"] == "Dark"
     metric_values = {item.label: item.value for item in app.metric}
     assert metric_values["Total projects"] == "0"
     assert metric_values["Completed analyses"] == "0"
@@ -398,9 +402,9 @@ def test_streamlit_demo_workflow_saves_a_reopenable_report(
         "Profile",
         "Settings",
     ):
-        app.selectbox(key="page_nav").set_value(page).run()
+        app.radio(key="page_nav").set_value(page).run()
         assert not app.exception, f"Empty-state navigation to {page} failed"
-    app.selectbox(key="page_nav").set_value("Create Project").run()
+    app.radio(key="page_nav").set_value("Create Project").run()
     next(item for item in app.text_input if item.label == "Project name *").set_value(
         "UI workflow project"
     )
@@ -452,10 +456,10 @@ def test_streamlit_demo_workflow_saves_a_reopenable_report(
         item.label == "Download report (JSON)"
         for item in app.get("download_button")
     )
-    app.selectbox(key="page_nav").set_value("My Projects").run()
+    app.radio(key="page_nav").set_value("My Projects").run()
     app.button(key=f"project_open_{project_id}").click().run()
     assert not app.exception
-    assert app.selectbox(key="page_nav").value == "Project Workspace"
+    assert app.radio(key="page_nav").value == "Project Workspace"
     assert any(
         item.label == "Download report (JSON)"
         for item in app.get("download_button")
@@ -471,7 +475,7 @@ def test_streamlit_demo_workflow_saves_a_reopenable_report(
         "Settings",
         "Project Workspace",
     ):
-        app.selectbox(key="page_nav").set_value(page).run()
+        app.radio(key="page_nav").set_value(page).run()
         assert not app.exception, f"Navigation to {page} raised a Streamlit exception"
 
     engine = get_engine()
@@ -495,6 +499,7 @@ def test_streamlit_demo_workflow_saves_a_reopenable_report(
 
     restarted_app = AppTest.from_file(str(app_path), default_timeout=20).run()
     assert not restarted_app.exception
+    assert restarted_app.radio(key="vl_theme").value == "Light"
     restarted_metrics = {
         item.label: item.value for item in restarted_app.metric
     }

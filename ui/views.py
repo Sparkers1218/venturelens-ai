@@ -9,6 +9,7 @@ import streamlit as st
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
+from config.settings import get_settings
 from core.analysis import build_rule_based_report
 from core.schemas import CompetitorInput, ProjectInput, ResearchSourceInput
 from database.connection import database_session
@@ -103,12 +104,23 @@ def _render_activity_feed(projects: list[dict[str, Any]], limit: int = 8) -> Non
 
 
 def render_dashboard() -> None:
-    st.title("VentureLens AI")
-    st.caption("Better Questions. Stronger Ideas.")
-    st.info(
-        "Local demo mode. Projects and reports are saved to the configured database. "
-        "Authentication, live research, and AI-provider integrations are not configured."
+    demo_mode = get_settings().demo_mode
+    st.title("Dashboard")
+    st.caption(
+        "Fictional evaluator sample and deterministic analysis."
+        if demo_mode
+        else "Your saved startup projects and analysis."
     )
+    if demo_mode:
+        st.info(
+            "Read-only evaluator demo using fictional synthetic data in temporary "
+            "in-memory storage. No user data is accepted or persisted."
+        )
+    else:
+        st.info(
+            "Local demo mode. Projects and reports are saved to the configured database. "
+            "Authentication, live research, and AI-provider integrations are not configured."
+        )
 
     projects = _read_projects()
     if projects is None:
@@ -201,12 +213,19 @@ def render_dashboard() -> None:
     else:
         st.caption("Create your first startup project to begin.")
 
-    if st.button("Create a project", type="primary", key="dashboard_create"):
+    if not demo_mode and st.button(
+        "Create a project", type="primary", key="dashboard_create"
+    ):
         request_navigation("Create Project")
 
 
 def render_new_project() -> None:
     st.title("Create Project")
+    if get_settings().demo_mode:
+        st.info(
+            "Project creation is disabled in the read-only synthetic evaluator demo."
+        )
+        return
     st.caption("Save a draft now and refine it as you learn.")
 
     with st.form("create_project_form"):
@@ -251,6 +270,7 @@ def render_new_project() -> None:
 
 
 def render_projects() -> None:
+    demo_mode = get_settings().demo_mode
     st.title("My Projects")
     search = st.text_input(
         "Search by project name, problem, or target customers",
@@ -261,7 +281,7 @@ def render_projects() -> None:
         return
     if not projects:
         st.info("No matching projects. Create a project to start a validation workspace.")
-        if st.button("Create project", key="projects_empty_create"):
+        if not demo_mode and st.button("Create project", key="projects_empty_create"):
             request_navigation("Create Project")
         return
 
@@ -276,21 +296,25 @@ def render_projects() -> None:
             )
             st.caption(project["analysis_status"])
             st.text(project["problem_statement"] or "No problem statement supplied.")
-            action_open, action_delete = st.columns([1, 1])
-            with action_open:
+            if demo_mode:
                 if st.button("Open workspace", key=f"project_open_{project['id']}"):
                     request_navigation("Project Workspace", project["id"])
-            with action_delete:
-                if st.button("Delete", key=f"project_delete_{project['id']}"):
-                    st.session_state["confirm_delete_project"] = project["id"]
-                    st.rerun()
+            else:
+                action_open, action_delete = st.columns([1, 1])
+                with action_open:
+                    if st.button("Open workspace", key=f"project_open_{project['id']}"):
+                        request_navigation("Project Workspace", project["id"])
+                with action_delete:
+                    if st.button("Delete", key=f"project_delete_{project['id']}"):
+                        st.session_state["confirm_delete_project"] = project["id"]
+                        st.rerun()
             if project["reports"] and st.button(
                 "View analysis report",
                 key=f"project_report_{project['id']}",
             ):
                 request_navigation("Analysis Report", project["id"])
 
-            if delete_id == project["id"]:
+            if not demo_mode and delete_id == project["id"]:
                 st.warning("Delete this project and its competitors, sources, and saved reports?")
                 confirm, cancel = st.columns(2)
                 with confirm:
@@ -348,51 +372,61 @@ def _save_project_update(project_id: str, fields: dict[str, str]) -> bool:
 
 
 def _render_project_editor(project: dict[str, Any]) -> None:
+    demo_mode = get_settings().demo_mode
     st.subheader("Idea details")
+    if demo_mode:
+        st.caption("Fictional sample project details; editing is disabled.")
     with st.form(f"edit_project_{project['id']}"):
         name = st.text_input(
             "Project name *",
             value=project["name"],
             max_chars=120,
             key=f"edit_name_{project['id']}",
+            disabled=demo_mode,
         )
         problem = st.text_area(
             "Problem statement",
             value=project["problem_statement"],
             max_chars=4000,
             key=f"edit_problem_{project['id']}",
+            disabled=demo_mode,
         )
         solution = st.text_area(
             "Proposed solution",
             value=project["proposed_solution"],
             max_chars=4000,
             key=f"edit_solution_{project['id']}",
+            disabled=demo_mode,
         )
         customers = st.text_area(
             "Target customers",
             value=project["target_customers"],
             max_chars=2000,
             key=f"edit_customers_{project['id']}",
+            disabled=demo_mode,
         )
         industry = st.text_input(
             "Industry",
             value=project["industry"],
             max_chars=120,
             key=f"edit_industry_{project['id']}",
+            disabled=demo_mode,
         )
         geography = st.text_input(
             "Geography",
             value=project["geography"],
             max_chars=160,
             key=f"edit_geography_{project['id']}",
+            disabled=demo_mode,
         )
         business_model = st.text_area(
             "Business model (optional)",
             value=project["business_model"],
             max_chars=2000,
             key=f"edit_business_model_{project['id']}",
+            disabled=demo_mode,
         )
-        submitted = st.form_submit_button("Save changes")
+        submitted = st.form_submit_button("Save changes", disabled=demo_mode)
 
     if submitted:
         if _save_project_update(
@@ -412,18 +446,31 @@ def _render_project_editor(project: dict[str, Any]) -> None:
 
 
 def _render_competitors(project: dict[str, Any]) -> None:
+    demo_mode = get_settings().demo_mode
     st.subheader("Competitors and alternatives")
-    st.caption("Entries are founder-provided and are not independently verified.")
+    st.caption(
+        "Fictional illustrative alternatives; not researched or verified."
+        if demo_mode
+        else "Entries are founder-provided and are not independently verified."
+    )
     with st.form(f"competitor_form_{project['id']}"):
-        name = st.text_input("Name *", max_chars=160)
-        description = st.text_area("Description or notes", max_chars=2000)
-        source_url = st.text_input("Website or reference URL (optional)", max_chars=2048)
-        target_audience = st.text_area("Target audience (optional)", max_chars=1000)
-        pricing = st.text_input("Pricing (optional)", max_chars=1000)
-        differentiation_notes = st.text_area(
-            "Differentiation notes (optional)", max_chars=2000
+        name = st.text_input("Name *", max_chars=160, disabled=demo_mode)
+        description = st.text_area(
+            "Description or notes", max_chars=2000, disabled=demo_mode
         )
-        submitted = st.form_submit_button("Add competitor or alternative")
+        source_url = st.text_input(
+            "Website or reference URL (optional)", max_chars=2048, disabled=demo_mode
+        )
+        target_audience = st.text_area(
+            "Target audience (optional)", max_chars=1000, disabled=demo_mode
+        )
+        pricing = st.text_input("Pricing (optional)", max_chars=1000, disabled=demo_mode)
+        differentiation_notes = st.text_area(
+            "Differentiation notes (optional)", max_chars=2000, disabled=demo_mode
+        )
+        submitted = st.form_submit_button(
+            "Add competitor or alternative", disabled=demo_mode
+        )
 
     if submitted:
         try:
@@ -461,7 +508,12 @@ def _render_competitors(project: dict[str, Any]) -> None:
             if competitor["target_audience"]:
                 st.caption(f"Target audience: {competitor['target_audience']}")
             if competitor["pricing"]:
-                st.caption(f"Pricing (founder-provided): {competitor['pricing']}")
+                pricing_label = (
+                    "Pricing (not researched)"
+                    if demo_mode
+                    else "Pricing (founder-provided)"
+                )
+                st.caption(f"{pricing_label}: {competitor['pricing']}")
             if competitor["differentiation_notes"]:
                 st.caption(
                     "Differentiation notes (unverified): "
@@ -470,7 +522,9 @@ def _render_competitors(project: dict[str, Any]) -> None:
             if competitor["source_url"]:
                 st.link_button("Open source", competitor["source_url"])
             if st.button(
-                "Remove entry", key=f"remove_competitor_{competitor['id']}"
+                "Remove entry",
+                key=f"remove_competitor_{competitor['id']}",
+                disabled=demo_mode,
             ):
                 try:
                     with database_session() as session:
@@ -487,19 +541,30 @@ def _render_competitors(project: dict[str, Any]) -> None:
 
 
 def _render_sources(project: dict[str, Any]) -> None:
+    demo_mode = get_settings().demo_mode
     st.subheader("Research source notes")
     st.caption(
-        "Manual source records only. They are user-provided references, not live research "
-        "and not independently verified."
+        "No external sources are included in this synthetic sample."
+        if demo_mode
+        else (
+            "Manual source records only. They are user-provided references, not live "
+            "research and not independently verified."
+        )
     )
     with st.form(f"source_form_{project['id']}"):
-        title = st.text_input("Source title *", max_chars=200)
-        publisher = st.text_input("Publisher (optional)", max_chars=200)
-        source_url = st.text_input("Source URL (optional)", max_chars=2048)
-        summary = st.text_area(
-            "Research note or relevant excerpt (optional)", max_chars=4000
+        title = st.text_input("Source title *", max_chars=200, disabled=demo_mode)
+        publisher = st.text_input(
+            "Publisher (optional)", max_chars=200, disabled=demo_mode
         )
-        submitted = st.form_submit_button("Save source note")
+        source_url = st.text_input(
+            "Source URL (optional)", max_chars=2048, disabled=demo_mode
+        )
+        summary = st.text_area(
+            "Research note or relevant excerpt (optional)",
+            max_chars=4000,
+            disabled=demo_mode,
+        )
+        submitted = st.form_submit_button("Save source note", disabled=demo_mode)
 
     if submitted:
         try:
@@ -538,7 +603,11 @@ def _render_sources(project: dict[str, Any]) -> None:
             st.text(source["summary"] or "No summary supplied.")
             if source["source_url"]:
                 st.link_button("Open source", source["source_url"])
-            if st.button("Remove source", key=f"remove_source_{source['id']}"):
+            if st.button(
+                "Remove source",
+                key=f"remove_source_{source['id']}",
+                disabled=demo_mode,
+            ):
                 try:
                     with database_session() as session:
                         remove_source(
@@ -554,13 +623,24 @@ def _render_sources(project: dict[str, Any]) -> None:
 
 
 def _render_report(project: dict[str, Any]) -> None:
+    demo_mode = get_settings().demo_mode
     st.subheader("Analysis report")
     st.caption(
-        "Rule-based demo analysis (not AI-generated). The completeness chart is not a "
-        "success score."
+        (
+            "Deterministic rule-based report of fictional synthetic data (not "
+            "AI-generated or external research)."
+            if demo_mode
+            else "Rule-based demo analysis (not AI-generated). The completeness chart "
+            "is not a success score."
+        )
     )
 
-    if st.button("Generate and save report", type="primary", key=f"analyze_{project['id']}"):
+    if st.button(
+        "Generate and save report",
+        type="primary",
+        key=f"analyze_{project['id']}",
+        disabled=demo_mode,
+    ):
         payload = build_rule_based_report(
             {
                 "name": project["name"],
@@ -724,8 +804,12 @@ def _render_report(project: dict[str, Any]) -> None:
 
     st.markdown("### Evidence and research references")
     st.caption(
-        "All listed sources are manual user-entered records. URLs are not fetched "
-        "or verified by this application."
+        "No external research sources are included in this synthetic sample."
+        if demo_mode
+        else (
+            "All listed sources are manual user-entered records. URLs are not fetched "
+            "or verified by this application."
+        )
     )
     if payload["evidence_and_research_references"]:
         st.dataframe(
@@ -787,13 +871,14 @@ def _render_report(project: dict[str, Any]) -> None:
 
 
 def render_project_workspace() -> None:
+    demo_mode = get_settings().demo_mode
     st.title("Project workspace")
     projects = _read_projects()
     if projects is None:
         return
     if not projects:
         st.info("Create a project before opening a workspace.")
-        if st.button("Create project", key="workspace_empty_create"):
+        if not demo_mode and st.button("Create project", key="workspace_empty_create"):
             request_navigation("Create Project")
         return
 
@@ -864,16 +949,25 @@ def _choose_project(
 
 
 def _render_project_required_empty_state() -> None:
+    if get_settings().demo_mode:
+        st.info("No synthetic sample project is available.")
+        return
     st.info("Create a project first. Project-specific information will appear here.")
     if st.button("Create project", key="section_empty_create"):
         request_navigation("Create Project")
 
 
 def render_competitor_insights() -> None:
+    demo_mode = get_settings().demo_mode
     st.title("Competitor Insights")
     st.caption(
-        "Compare founder-entered competitors and alternatives. Entries are not "
-        "independently verified."
+        (
+            "Compare fictional illustrative alternatives. They are not researched "
+            "or real competitor findings."
+            if demo_mode
+            else "Compare founder-entered competitors and alternatives. Entries are "
+            "not independently verified."
+        )
     )
     projects = _read_projects()
     if projects is None:
@@ -887,10 +981,15 @@ def render_competitor_insights() -> None:
 
 
 def render_research_page() -> None:
+    demo_mode = get_settings().demo_mode
     st.title("Research")
     st.caption(
-        "Add manual sources with attribution. VentureLens does not retrieve or "
-        "verify these references."
+        (
+            "The synthetic sample contains no external research sources."
+            if demo_mode
+            else "Add manual sources with attribution. VentureLens does not retrieve "
+            "or verify these references."
+        )
     )
     projects = _read_projects()
     if projects is None:
@@ -904,10 +1003,15 @@ def render_research_page() -> None:
 
 
 def render_analysis_report_page() -> None:
+    demo_mode = get_settings().demo_mode
     st.title("Analysis Report")
     st.caption(
-        "Generate and review a saved, rule-based report. Scores describe the "
-        "information supplied, not business viability."
+        (
+            "Review the saved deterministic report for the fictional sample."
+            if demo_mode
+            else "Generate and review a saved, rule-based report. Scores describe the "
+            "information supplied, not business viability."
+        )
     )
     projects = _read_projects()
     if projects is None:
@@ -934,19 +1038,23 @@ def render_notifications() -> None:
 
 def render_profile() -> None:
     st.title("Profile")
-    st.info("Demo mode: user accounts and authentication are not enabled.")
-    st.write(
-        "There is no signed-in profile. Projects belong to this local database "
-        "and are not isolated by user."
-    )
+    if get_settings().demo_mode:
+        st.info("Public synthetic evaluator demo; user accounts are not enabled.")
+        st.write("No user project data is accepted or stored in this read-only mode.")
+    else:
+        st.info("Demo mode: user accounts and authentication are not enabled.")
+        st.write(
+            "There is no signed-in profile. Projects belong to this local database "
+            "and are not isolated by user."
+        )
 
 
 def render_settings() -> None:
-    from config.settings import get_settings
-
     settings = get_settings()
     database_url = settings.database_url.lower()
-    if database_url.startswith("sqlite"):
+    if settings.demo_mode:
+        database_kind = "In-memory SQLite (read-only)"
+    elif database_url.startswith("sqlite"):
         database_kind = "SQLite local database"
     elif database_url.startswith(("postgresql:", "postgresql+")):
         database_kind = "PostgreSQL database"
@@ -954,7 +1062,11 @@ def render_settings() -> None:
         database_kind = "Configured database"
 
     st.title("Settings")
-    st.caption("Runtime configuration for this local demo.")
+    st.caption(
+        "Public, synthetic, read-only evaluator demo."
+        if settings.demo_mode
+        else "Runtime configuration for this local demo."
+    )
     app_column, database_column = st.columns(2)
     app_column.metric("Application mode", settings.app_env)
     database_column.metric("Database", database_kind)
@@ -964,9 +1076,8 @@ def render_settings() -> None:
     )
     st.subheader("Appearance")
     st.write(
-        "The app uses Streamlit's native theme and responsive layout. Choose a "
-        "light or dark theme from Streamlit's menu; this app does not store a "
-        "separate theme preference."
+        "Choose Light or Dark in the application header. Your choice remains "
+        "active across Streamlit reruns in this session and resets for a new session."
     )
     st.subheader("Available integrations")
     st.write("Authentication, live research, and AI-provider integrations are disabled.")
