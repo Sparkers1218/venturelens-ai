@@ -76,7 +76,7 @@ PAGE_ICONS = {
 
 with st.sidebar:
     st.title(f"🔎 {settings.app_name}")
-    st.caption("INTELLIGENCE WORKSPACE")
+    st.caption("SPARK2SCALE · PS49")
     st.divider()
     page = st.radio(
         "Navigation",

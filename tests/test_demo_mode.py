@@ -84,7 +84,16 @@ def test_public_evaluator_ui_is_read_only_and_discloses_synthetic_data(
         assert any(
             item.value == SYNTHETIC_PROJECT_NAME for item in app.subheader
         )
+        assert any("Spark2Scale · PS49" in item.value for item in app.caption)
         assert not configured_database.exists()
+
+        app.radio(key="vl_theme").set_value("Dark").run()
+        assert not app.exception
+        assert app.radio(key="vl_theme").value == "Dark"
+        app.radio(key="page_nav").set_value("My Projects").run()
+        assert app.radio(key="vl_theme").value == "Dark"
+        app.radio(key="vl_theme").set_value("Light").run()
+        assert app.radio(key="vl_theme").value == "Light"
 
         app.radio(key="page_nav").set_value("Create Project").run()
         assert not app.exception
