@@ -48,9 +48,10 @@
 
 - `.streamlit/config.toml` and [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
   prepare the app for Streamlit Community Cloud.
-- Hosting still requires a GitHub branch containing these changes and an
-  authorized Community Cloud deployment. No public URL has been created or
-  tested.
+- The deployment source is pushed to `feature/project-ui` at commit
+  `a28ca4fbdd05b9c42595721b908a286ee1fbf6cb`. Hosting still requires an
+  authorized Community Cloud sign-in and deployment. No public URL has been
+  created or tested.
 - Community Cloud Secrets for the prepared demo are:
 
   ```toml

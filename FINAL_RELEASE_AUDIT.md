@@ -21,18 +21,13 @@ not ready for authenticated or public multi-user project storage.
 ## 2. Branch and working-tree status
 
 - Current branch: `feature/project-ui`, tracking `origin/feature/project-ui`.
-- The worktree is dirty. Changes from the earlier audit and pre-existing
-  teammate work were preserved; no reset, checkout, commit, push, branch
-  switch, or remote change was performed.
-- Modified: `.env.example`, `PROJECT_STATUS.md`, `README.md`, `app.py`,
-  `config/settings.py`, `core/analysis.py`, `database/connection.py`,
-  `tests/test_config.py`, `tests/test_mvp.py`, `ui/components.py`, and
-  `ui/views.py`.
-- Untracked: `.streamlit/`, `DEPLOYMENT_GUIDE.md`, `FINAL_RELEASE_AUDIT.md`,
-  `database/demo_data.py`, `tests/test_demo_mode.py`, `tests/test_theme.py`,
-  `theme_review.txt`, and `ui/theme.py`.
-- `tests/test_mvp.py`, `ui/components.py`, `tests/test_theme.py`,
-  `theme_review.txt`, and `ui/theme.py` include prior work and were preserved.
+- Commit `a28ca4fbdd05b9c42595721b908a286ee1fbf6cb` was pushed to the
+  existing `https://github.com/Sparkers1218/venturelens-ai.git` remote and
+  independently verified on GitHub.
+- The only remaining untracked worktree file is `theme_review.txt`; it is
+  experimental and was intentionally not committed. `.env`, Streamlit secrets,
+  `.venv`, and `venturelens.db` were excluded; the database file was not read.
+- No branch switch, force push, reset, deletion, or change to `main` was made.
 - No local database, project data, or secret file was inspected or removed.
 
 ## 3. Test and technical verification
@@ -186,19 +181,19 @@ publishers, or substantiate market claims.
 
 ## 14. Deployment readiness
 
-The source is prepared for Streamlit Community Cloud with Python 3.12 and
-Secrets:
+The source is pushed and prepared for Streamlit Community Cloud with Python
+3.12 and Secrets:
 
 ```toml
 APP_ENV = "production"
 DEMO_MODE = true
 ```
 
-The exact steps are in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). The source
-changes must first be present in GitHub; no commit or push was made, and no
-Cloud account action was performed. Therefore **there is no public URL to
-share yet**. After deployment, verify the hosted URL and sample in a private
-browser window before sending it to evaluators.
+The exact steps are in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). The Cloud
+console was opened, but it displayed **Continue to sign-in** and no authorized
+account session was available. No app was created and no deployment was
+attempted. Therefore **there is no public URL to share yet**. After sign-in,
+deployment, and the hosted checks, the generated URL can be shared.
 
 This verdict is limited to the anonymous synthetic read-only demo. It does
 not approve public multi-user project storage or claim production-grade
@@ -222,10 +217,10 @@ authentication, data isolation, or persistent cloud storage.
 
 ## 16. Known issues and remaining manual checks
 
-- The owner must make this worktree available on GitHub and deploy the
-  `feature/project-ui` branch through their authorized Community Cloud account.
-- Confirm Python 3.12, `app.py`, and the two Secrets values in the Cloud
-  settings; then inspect startup logs.
+- The owner must sign in to Streamlit Community Cloud using GitHub and approve
+  its requested repository access for `Sparkers1218/venturelens-ai`.
+- Then deploy `feature/project-ui` with `app.py`, Python 3.12, and the Secrets
+  values above; inspect startup logs and run the hosted checks.
 - Open the generated public URL in a private browser and confirm the sample,
   read-only controls, and JSON download before sharing.
 - Actual Cloud deployment, hosted URL access, persistence/restart behavior in
@@ -277,6 +272,7 @@ Run the complete test suite:
 ### Verified manually
 
 - [x] Earlier local audit manually checked a light/dark theme change.
+- [ ] Community Cloud sign-in and repository authorization.
 - [ ] Public Community Cloud deployment and generated URL.
 - [ ] Hosted private-browser walkthrough before evaluator sharing.
 
@@ -290,8 +286,8 @@ Run the complete test suite:
 
 ## 19. Recommended next action
 
-Sign in to GitHub/Streamlit Community Cloud, make the prepared branch available
-to the host, deploy it using [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md), and
-copy the generated HTTPS URL only after the manual checks above pass. That
-human-authorized deployment step is the only blocker to creating a public
-evaluator link; the deployment itself has not yet been done.
+Sign in to Streamlit Community Cloud, approve repository access for
+`Sparkers1218/venturelens-ai`, and deploy the already-pushed branch using
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md). Copy the generated HTTPS URL only
+after the manual checks above pass. This account authorization is the current
+blocker; no deployment has been started.

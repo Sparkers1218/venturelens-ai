@@ -1,5 +1,12 @@
 # Public Evaluator Demo Deployment
 
+The deployment-ready source is pushed to
+[`feature/project-ui`](https://github.com/Sparkers1218/venturelens-ai/tree/feature/project-ui)
+at commit
+[`a28ca4f`](https://github.com/Sparkers1218/venturelens-ai/commit/a28ca4fbdd05b9c42595721b908a286ee1fbf6cb).
+No Community Cloud app has been created yet; the current browser session is
+signed out and must be authorized before deployment.
+
 ## What this deployment is
 
 The recommended hosting target is **Streamlit Community Cloud**. The app runs
@@ -14,23 +21,20 @@ credentials are not required.
 
 ## Before opening the Cloud console
 
-1. Make this completed source branch available in the GitHub repository. The
-   deployment host can only deploy commits already present on GitHub.
-2. Confirm you have GitHub access to `Sparkers1218/venturelens-ai` and can
-   create an app in Streamlit Community Cloud.
-3. Do not add `.env`, `.streamlit/secrets.toml`, API keys, or database
+1. Sign in to Streamlit Community Cloud using a GitHub account authorized to
+   access `Sparkers1218/venturelens-ai`. Approve the Community Cloud OAuth
+   access request if prompted, including access to this repository.
+2. Do not add `.env`, `.streamlit/secrets.toml`, API keys, or database
    credentials to Git. `.streamlit/secrets.toml` is ignored by `.gitignore`.
 
 ## Create the app
 
-1. Sign in to Streamlit Community Cloud with the GitHub account that can access
-   `Sparkers1218/venturelens-ai`.
-2. Select **Create app** (or **Deploy an app**) and choose:
+1. Select **Create app** (or **Deploy an app**) and choose:
    - Repository: `Sparkers1218/venturelens-ai`
    - Branch: `feature/project-ui`
    - Main file path: `app.py`
-3. Open **Advanced settings** before deploying and select **Python 3.12**.
-4. In the **Secrets** field, enter this TOML exactly:
+2. Open **Advanced settings** before deploying and select **Python 3.12**.
+3. In the **Secrets** field, enter this TOML exactly:
 
    ```toml
    APP_ENV = "production"
@@ -40,7 +44,7 @@ credentials are not required.
    These two settings are required. No other secret or `DATABASE_URL` is
    required. In production, the app refuses to start unless demo mode is
    enabled; demo mode always selects its own in-memory database.
-5. Select **Deploy** and wait for the app to finish starting. The first
+4. Select **Deploy** and wait for the app to finish starting. The first
    dependency installation can take several minutes.
 
 ## Verify before sharing

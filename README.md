@@ -123,10 +123,11 @@ Source notes and competitor records are manually entered and are not
 independently verified. The completeness indicator measures only whether
 fields are filled; it is not a market or success score.
 
-The repository includes Streamlit Community Cloud configuration, but no hosted
-deployment has been created or verified. The public evaluator deployment uses
-`APP_ENV="production"` and `DEMO_MODE=true` in the host's Secrets settings; it
-does not require a database URL, OAuth credentials, AI key, or research key.
+The deployment-ready source is published on `feature/project-ui`, but no
+Streamlit Community Cloud app or public URL has been created or verified. The
+public evaluator deployment uses `APP_ENV="production"` and `DEMO_MODE=true`
+in the host's Secrets settings; it does not require a database URL, OAuth
+credentials, AI key, or research key.
 Public multi-user project storage would require authentication, ownership
 enforcement, persistent database hosting, migrations, and cross-user security
 tests.
