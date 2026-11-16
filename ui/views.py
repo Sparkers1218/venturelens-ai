@@ -872,7 +872,7 @@ def _render_report(project: dict[str, Any]) -> None:
 
 def render_project_workspace() -> None:
     demo_mode = get_settings().demo_mode
-    st.title("Project workspace")
+    st.title("Project Workspace")
     projects = _read_projects()
     if projects is None:
         return

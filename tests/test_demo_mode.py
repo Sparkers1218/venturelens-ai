@@ -102,6 +102,7 @@ def test_public_evaluator_ui_is_read_only_and_discloses_synthetic_data(
 
         app.radio(key="page_nav").set_value("Project Workspace").run()
         assert not app.exception
+        assert any(item.value == "Project Workspace" for item in app.title)
         assert all(item.disabled for item in app.text_input)
         assert all(item.disabled for item in app.text_area)
         mutation_labels = {
