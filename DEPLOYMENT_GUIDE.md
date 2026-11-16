@@ -87,8 +87,9 @@ Verified on the current deployment: the dashboard and fictional sample
 loaded; My Projects and Create Project navigation worked; project creation
 displayed the read-only message; and the light/dark controls switched
 successfully in both directions. A local browser sweep also covered every
-navigation page in both themes at 320, 375, 390, 430, 768, 1024, and 1440 CSS
-pixels without observed overflow or clipped content. That responsive sweep
+navigation page in both themes at requested widths 320, 375, 390, 430, 768,
+1024, and 1440 CSS pixels without observed overflow or clipped content. The
+browser rounded 375 to 376 and 430 to 431 CSS pixels. That responsive sweep
 was not performed against the public deployment. During the latest UI
 verification, Cloud application logs were not directly inspected. The browser
 console showed resource 404s, aborted status-page embed requests, Vega chart

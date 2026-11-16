@@ -136,10 +136,11 @@ The Streamlit Community Cloud startup issue caused by settings not reading
 `st.secrets` has been fixed. Hosted dashboard, sample data, navigation, theme
 switching in both directions, and disabled project creation were verified
 after UI recovery commit `8e9c665f41461f2e054bd48a3c527eaf60233abd`. A local
-browser sweep covered all application pages in both themes at 320, 375, 390,
-430, 768, 1024, and 1440 CSS pixels without observed horizontal overflow or
-clipped content. These responsive checks were local, not a viewport-by-viewport
-test of the hosted deployment. See
+browser sweep covered all application pages in both themes at requested widths
+320, 375, 390, 430, 768, 1024, and 1440 CSS pixels without observed horizontal
+overflow or clipped content. The browser rounded 375 to 376 and 430 to 431 CSS
+pixels. These responsive checks were local, not a viewport-by-viewport test of
+the hosted deployment. See
 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for deployment configuration and
 limitations. This public demo is not authenticated multi-user hosting.
 

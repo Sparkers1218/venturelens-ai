@@ -66,9 +66,10 @@
   navigation and theme controls remained responsive. Cloud logs were not
   inspected during this UI review.
 - A local browser sweep covered all ten navigation pages, both themes, and
-  viewport widths 320, 375, 390, 430, 768, 1024, and 1440 CSS pixels. No
-  horizontal overflow or clipped content was observed. This was not a
-  viewport-by-viewport test of the public Cloud deployment.
+  requested viewport widths 320, 375, 390, 430, 768, 1024, and 1440 CSS
+  pixels. The browser rounded 375 to 376 and 430 to 431 pixels. No horizontal
+  overflow or clipped content was observed. This was not a viewport-by-
+  viewport test of the public Cloud deployment.
 - The verified Cloud runtime was Python 3.11.18. Community Cloud Secrets for
   the demo are:
 

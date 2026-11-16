@@ -20,7 +20,8 @@ was manually checked: the synthetic dashboard loaded, My Projects and Create
 Project navigation worked, project creation was disabled, and light/dark
 switching worked in both directions. A local browser sweep covered all ten
 pages, both themes, and the requested viewport widths without observed
-overflow or clipped content.
+overflow or clipped content. The browser rounded 375 to 376 and 430 to 431 CSS
+pixels.
 
 **Release verdict: READY FOR CONTROLLED PUBLIC DEMO.** This verdict applies
 only to the anonymous synthetic read-only demo. The app is not ready for
@@ -56,7 +57,7 @@ authenticated or public multi-user project storage.
 | Existing local workflow | Complete pytest suite | Project/competitor/source/report persistence, reopening, theme and existing workflow tests passed |
 | Hosted Cloud startup | Community Cloud logs and public page | Reboot recloned `feature/project-ui`; Uvicorn started; production guard error cleared |
 | Hosted UI | Browser walkthrough after UI recovery | Synthetic evaluator label/sample, My Projects and Create Project navigation, read-only Create Project state, and light/dark switching in both directions verified |
-| Responsive UI | Local browser sweep | All ten navigation pages, both themes, and CSS viewport widths 320, 375, 390, 430, 768, 1024, and 1440; no observed horizontal overflow or clipped content |
+| Responsive UI | Local browser sweep | All ten navigation pages and both themes at requested widths 320, 375, 390, 430, 768, 1024, and 1440; browser rounded 375 to 376 and 430 to 431 CSS pixels; no observed horizontal overflow or clipped content |
 
 Tests ran in the existing `.venv`; no dependency was installed or changed.
 The hosted browser console showed resource 404s, aborted status-page embed
@@ -325,8 +326,9 @@ Run the complete test suite:
 - [x] Public My Projects and Create Project navigation; creation restriction
   displayed.
 - [x] Public light/dark theme toggle in both directions.
-- [x] Local browser sweep of all ten pages, both themes, and widths 320, 375,
-  390, 430, 768, 1024, and 1440 CSS pixels without observed overflow/clipping.
+- [x] Local browser sweep of all ten pages and both themes at requested widths
+  320, 375, 390, 430, 768, 1024, and 1440 CSS pixels; browser rounded 375 to
+  376 and 430 to 431; no observed overflow/clipping.
 - [ ] Separate private/incognito browser walkthrough and settings/profile
   pages.
 
