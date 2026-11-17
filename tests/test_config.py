@@ -10,6 +10,7 @@ SETTING_ENV_VARS = (
     "LOG_LEVEL",
     "DATABASE_URL",
     "DEMO_MODE",
+    "DEMO_WRITABLE",
 )
 
 
@@ -25,6 +26,7 @@ def test_settings_have_safe_defaults(monkeypatch) -> None:
     assert settings.log_level == "INFO"
     assert settings.database_url == "sqlite:///./venturelens.db"
     assert settings.demo_mode is False
+    assert settings.demo_writable is False
 
 
 def test_settings_read_environment_variables(monkeypatch) -> None:
@@ -85,3 +87,20 @@ def test_production_secret_without_demo_secret_keeps_demo_disabled(
 
     assert settings.app_env == "production"
     assert settings.demo_mode is False
+    assert settings.demo_writable is False
+
+
+def test_settings_read_demo_writable_secret(monkeypatch) -> None:
+    for name in SETTING_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(
+        st,
+        "secrets",
+        {"APP_ENV": "production", "DEMO_MODE": True, "DEMO_WRITABLE": True},
+    )
+
+    settings = Settings(_env_file=None)
+
+    assert settings.app_env == "production"
+    assert settings.demo_mode is True
+    assert settings.demo_writable is True

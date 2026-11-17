@@ -39,9 +39,15 @@ if settings.app_env == "production" and not settings.demo_mode:
     st.stop()
 
 try:
-    initialize_database()
-    if settings.demo_mode:
-        seed_evaluator_demo()
+    if settings.demo_mode and settings.demo_writable:
+        if "_demo_session_initialized" not in st.session_state:
+            initialize_database()
+            seed_evaluator_demo()
+            st.session_state["_demo_session_initialized"] = True
+    else:
+        initialize_database()
+        if settings.demo_mode:
+            seed_evaluator_demo()
 except SQLAlchemyError as error:
     LOGGER.error(
         "Could not initialize the application database (%s)",
@@ -56,10 +62,16 @@ except SQLAlchemyError as error:
 apply_requested_navigation()
 render_app_header(settings.app_name)
 if settings.demo_mode:
-    st.warning(
-        "PUBLIC EVALUATOR DEMO — fictional synthetic sample data only; read-only; "
-        "no authentication or user project data."
-    )
+    if settings.demo_writable:
+        st.warning(
+            "PUBLIC EVALUATOR WORKSPACE — temporary per-session demo; changes persist "
+            "only in this browser session and are isolated from other evaluators."
+        )
+    else:
+        st.warning(
+            "PUBLIC EVALUATOR DEMO — fictional synthetic sample data only; read-only; "
+            "no authentication or user project data."
+        )
 
 PAGE_ICONS = {
     "Dashboard": "📊",
@@ -87,9 +99,13 @@ with st.sidebar:
     )
     st.divider()
     st.caption(
-        "Read-only synthetic evaluator demo"
-        if settings.demo_mode
-        else "Local demo mode · No login or live research"
+        "Isolated per-session evaluator demo"
+        if (settings.demo_mode and settings.demo_writable)
+        else (
+            "Read-only synthetic evaluator demo"
+            if settings.demo_mode
+            else "Local demo mode · No login or live research"
+        )
     )
 
 if page == "Dashboard":

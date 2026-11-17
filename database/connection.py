@@ -8,11 +8,13 @@ from threading import RLock
 from sqlalchemy import Engine, create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+import streamlit as st
 
 from config.settings import get_settings
 from database.models import Base
 
 
+SESSION_ENGINE_KEY = "_demo_session_engine"
 _initialization_lock = RLock()
 _initialized_engines: set[Engine] = set()
 
@@ -37,11 +39,76 @@ def create_database_engine(database_url: str) -> Engine:
     return engine
 
 
+def get_session_engine() -> Engine | None:
+    """Return the active Streamlit session's in-memory SQLite engine if present."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        if get_script_run_ctx() is not None and SESSION_ENGINE_KEY in st.session_state:
+            engine = st.session_state[SESSION_ENGINE_KEY]
+            if isinstance(engine, Engine):
+                return engine
+    except Exception:
+        pass
+    return None
+
+
+def get_or_create_session_engine() -> Engine:
+    """Get or create an isolated in-memory SQLite engine for the current session."""
+    session_engine = get_session_engine()
+    if session_engine is not None:
+        return session_engine
+
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        if get_script_run_ctx() is not None:
+            engine = create_database_engine("sqlite://")
+            st.session_state[SESSION_ENGINE_KEY] = engine
+            return engine
+    except Exception:
+        pass
+
+    return _get_fallback_demo_engine()
+
+
 @lru_cache(maxsize=1)
+def _get_fallback_demo_engine() -> Engine:
+    return create_database_engine("sqlite://")
+
+
+@lru_cache(maxsize=1)
+def _get_read_only_demo_engine() -> Engine:
+    return create_database_engine("sqlite://")
+
+
+@lru_cache(maxsize=1)
+def _get_configured_engine(database_url: str) -> Engine:
+    return create_database_engine(database_url)
+
+
 def get_engine() -> Engine:
     settings = get_settings()
-    database_url = "sqlite://" if settings.demo_mode else settings.database_url
-    return create_database_engine(database_url)
+    if settings.demo_mode:
+        if settings.demo_writable:
+            return get_or_create_session_engine()
+        return _get_read_only_demo_engine()
+    return _get_configured_engine(settings.database_url)
+
+
+def _clear_engine_cache() -> None:
+    _get_configured_engine.cache_clear()
+    _get_read_only_demo_engine.cache_clear()
+    _get_fallback_demo_engine.cache_clear()
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        if get_script_run_ctx() is not None:
+            st.session_state.pop(SESSION_ENGINE_KEY, None)
+    except Exception:
+        pass
+    with _initialization_lock:
+        _initialized_engines.clear()
+
+
+get_engine.cache_clear = _clear_engine_cache  # type: ignore[attr-defined]
 
 
 def enable_read_only_sqlite(engine: Engine) -> None:

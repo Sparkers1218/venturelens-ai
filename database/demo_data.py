@@ -23,12 +23,19 @@ SYNTHETIC_PROJECT_NAME = "Synthetic sample: Harbor Harvest Planner"
 _seed_lock = RLock()
 
 
-def seed_evaluator_demo(engine: Engine | None = None) -> None:
-    if not get_settings().demo_mode:
+def seed_evaluator_demo(
+    engine: Engine | None = None,
+    *,
+    read_only: bool | None = None,
+) -> None:
+    settings = get_settings()
+    if not settings.demo_mode:
         raise RuntimeError("Synthetic evaluator data requires DEMO_MODE=true.")
 
     target_engine = engine or get_engine()
     initialize_database(target_engine)
+    if read_only is None:
+        read_only = not settings.demo_writable
 
     with _seed_lock:
         with database_session(target_engine) as session:
@@ -119,4 +126,5 @@ def seed_evaluator_demo(engine: Engine | None = None) -> None:
                     payload,
                 )
 
-        enable_read_only_sqlite(target_engine)
+        if read_only:
+            enable_read_only_sqlite(target_engine)

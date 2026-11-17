@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     database_url: str = "sqlite:///./venturelens.db"
     demo_mode: bool = False
+    demo_writable: bool = False
 
     @classmethod
     def settings_customise_sources(
